@@ -10,6 +10,9 @@ $UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
 $UNDEF2 = $UNDEF_CHAR x 2;   # xx
 
 
+# DATETIME-LIKE METHODS
+
+
 sub new 
 {
     # There is not much parameter checking, because we don't know in advance
@@ -51,6 +54,7 @@ sub second     { $_[0]->{second} }
 sub nanosecond { $_[0]->{nanosecond} }
 sub time_zone  { $_[0]->{time_zone} }
 
+
 # Internal stringification methods.
 # some of these methods are not used, but they are defined just in case.
 sub _year       { defined $_[0]->year   ? sprintf( "%0.4d", $_[0]->year )   : $UNDEF4 }
@@ -80,6 +84,69 @@ sub hms
 
 sub iso8601 { join 'T', $_[0]->ymd('-'), $_[0]->hms(':') }
 *datetime = \&iso8601;
+
+
+# DATETIME::INCOMPLETE METHODS
+
+
+sub is_undef 
+{
+    for ( values %{$_[0]} )
+    {
+        return 0 if defined $_;
+    }
+    return 1;
+}
+
+
+sub to_datetime
+{
+    my $self = shift;
+    my %param = @_;
+    die "no base datetime" unless exists $param{base} && 
+                                  UNIVERSAL::can( $param{base}, 'utc_rd_values' );
+
+    my $result = $param{base}->clone;
+    my ($key, $value);
+    while (($key, $value) = each %$self ) {
+        next unless defined $value;
+        if ( $key eq 'time_zone' )
+        {
+            $result->set_time_zone( $value );
+            next;
+        }        
+        $result->set( $key => $value );
+    }
+    return $result;
+}
+
+
+sub contains
+{
+    my $self = shift;
+    my $dt = shift;
+    die "no datetime" unless defined $dt && 
+                             UNIVERSAL::can( $dt, 'utc_rd_values' );
+
+    my ($key, $value);
+    while (($key, $value) = each %$self ) {
+        next unless defined $value;
+        if ( $key eq 'time_zone' )
+        {
+            # TODO! - time_zone is ignored.
+            next;
+        }        
+        return 0 unless $dt->$key == $value;
+    }
+    return 1;
+}
+
+
+sub to_recurrence
+{
+    # TODO
+    die "Not implemented";
+}
 
 
 1;
@@ -230,6 +297,10 @@ Gregorian dates so far.
 
 Returns a true value if the incomplete datetime range 
 I<contains> a given datetime value.
+
+Note: the incomplete-datetime time-zone value is ignored,
+that is, the value of "local time" is compared.
+This may lead to unexpected results if the time zone field is set.
 
 For example:
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 10;
+use Test::More tests => 15;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -19,6 +19,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;   # xx
     my $str = $dt->datetime;
     my $dti_clone;
     my $str_clone;
+    my $dti_half;
 
     $dti = DateTime::Incomplete->new( 
         year =>   $dt->year,
@@ -57,6 +58,29 @@ $UNDEF2 = $UNDEF_CHAR x 2;   # xx
 
     # end: Tests clone()
 
+
+    # Tests is_undef, false
+
+    is( $dti->is_undef , 0,
+        'not undef' );
+
+    $dti_half = $dti->clone;   # a half-defined datetime
+    my $dt2 = $dti_half->to_datetime( base => $dt );
+    is( $dt->datetime , $dt2->datetime,
+        'to_datetime' );
+
+
+    # Tests contains
+
+    is( $dti->contains( $dt2 ), 1,
+        'contains' );
+    $dt2->add( hours => 1 );
+    is( $dti->contains( $dt2 ), 0,
+        'does not contain' );
+
+
+    # undef time
+
     $dti->set( hour => undef );
     $str =~ s/00:/$UNDEF2:/;
     is( $dti->datetime , $str,
@@ -78,9 +102,14 @@ $UNDEF2 = $UNDEF_CHAR x 2;   # xx
     ok( ! defined( $dti->nanosecond ),
         'undef nanosecond' );
 
+    # Tests is_undef, true
+
+    is( $dti->is_undef , 1,
+        'is undef' );
+
     # TESTS TODO:
     # set_time_zone, time_zone
-    # year, month, day, hour, minute, second
+    #   -- together with contains() and to_datetime()
 
 }
 
