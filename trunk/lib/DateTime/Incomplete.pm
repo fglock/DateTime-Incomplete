@@ -135,10 +135,10 @@ sub _datetime_method
 
     $param{locale} = $self->locale if $self->has_locale;
     $param{time_zone} = $self->time_zone if $self->has_time_zone;
-    $param{$_} = $self->$_ for @fields;
+    $param{$_} = $self->$_() for @fields;
     $date = DateTime->new( %param );
     
-    return $date->$method;
+    return $date->$method();
 }
 
 # DATETIME-LIKE METHODS
@@ -162,7 +162,7 @@ sub _from_datetime
     my $class = shift;
     my $dt = shift;
     my %param;
-    $param{$_} = $dt->$_ for ( keys %FIELD_LENGTH );
+    $param{$_} = $dt->$_() for ( keys %FIELD_LENGTH );
     return $class->new( %param );
 }
 
@@ -203,7 +203,7 @@ sub today
     my %param;
     my %fields = ( %FIELD_LENGTH );
     delete $fields{$_} for ( qw/ hour minute second nanosecond / );
-    $param{$_} = $now->$_ for ( keys %fields );
+    $param{$_} = $now->$_() for ( keys %fields );
     return $class->new( %param );
 }
 
@@ -607,7 +607,7 @@ sub contains
             # time_zone and locale are ignored.
             next;
         }        
-        return 0 unless $dt->$key == $value;
+        return 0 unless $dt->$key() == $value;
     }
     return 1;
 }
@@ -634,18 +634,18 @@ sub next
         while ( @fields ) 
         {
             ( $field, undef ) = ( shift @fields, shift @fields );
-            if ( defined $self->$field )
+            if ( defined $self->$field() )
             {
-                $overflow = ( $self->$field < $result->$field );
+                $overflow = ( $self->$field() < $result->$field() );
                 return undef if $overflow && $field eq $FIELDS[0];
 
-                if ( $self->$field != $result->$field )
+                if ( $self->$field() != $result->$field() )
                 {
-                    eval { $result->set( $field => $self->$field ) }; 
+                    eval { $result->set( $field => $self->$field() ) }; 
                     if ( $@ ) 
                     {
                         $result->set( @fields );
-                        eval { $result->set( $field => $self->$field ) };
+                        eval { $result->set( $field => $self->$field() ) };
                         if ( $@ )
                         {
                             $overflow = 1;
@@ -693,12 +693,12 @@ sub previous
         while ( @fields ) 
         {
             ( $field, $value ) = ( shift @fields, shift @fields );
-            if ( defined $self->$field )
+            if ( defined $self->$field() )
             {
-                $overflow = ( $self->$field > $result->$field );
+                $overflow = ( $self->$field() > $result->$field() );
                 return undef if $overflow && $field eq $FIELDS[0];
 
-                if ( $self->$field != $result->$field )
+                if ( $self->$field() != $result->$field() )
                 {
                     if ( $overflow )
                     {
@@ -706,12 +706,12 @@ sub previous
                         $result->subtract( nanoseconds => 1 );
                         next REDO;
                     }
-                    my $diff = $result->$field - $self->$field ;
+                    my $diff = $result->$field() - $self->$field() ;
                     $diff--;
                     $result->subtract( $field  . 's' => $diff );
                     $result->set( @fields );
                     $result->subtract( nanoseconds => 1 );
-                    if ( $result->$field != $self->$field )
+                    if ( $result->$field() != $self->$field() )
                     {
                         $result->set( @fields );
                         $result->subtract( nanoseconds => 1 );
@@ -761,10 +761,10 @@ sub to_recurrence
         {
             if ( $_ eq 'year' ) 
             {
-                $year = $self->$_;
+                $year = $self->$_();
                 next;
             }
-            $param{$by} = [ $self->$_ ];
+            $param{$by} = [ $self->$_() ];
             next;
         }
         $freq = $_ unless $freq;
