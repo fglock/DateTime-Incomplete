@@ -35,8 +35,6 @@ or is that simply not defined?
 
 join the "defined" keys of two DT::Incomplete objects
 
-* to_spanset
-
 * set_week
 
 $dti->set( week => 10 )

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 52;
+use Test::More tests => 54;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -305,6 +305,23 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
       $dt->subtract( months => 10 );
       is( $dti_no_day->closest( $dt )->datetime , '2002-12-24T00:59:00',
           'closest xmas '.$dt->datetime.'' );
+
+      {
+          # to_spanset
+
+          $set = $dti_no_day->to_spanset;
+
+          my $dt = DateTime->new( year => 2003 );
+
+          is( $set->next( $dt )->{set}."" , '[2003-12-24T00:00:00..2003-12-24T00:00:01)',
+              'next xmas - span recurrence' );
+
+          $dti_no_day->set( second => undef, minute => undef );
+          $set = $dti_no_day->to_spanset;
+
+          is( $set->next( $dt )->{set}."" , '[2003-12-24T00:00:00..2003-12-24T01:00:00)',
+              'next xmas - span recurrence' );
+      }
 
   # End: Tests to_recurrence()
 

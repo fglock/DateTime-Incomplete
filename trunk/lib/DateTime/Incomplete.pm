@@ -13,7 +13,7 @@ my ( @FIELDS, %FIELD_LENGTH, @TIME_FIELDS, @FIELDS_SORTED );
 
 BEGIN
 {
-    $VERSION = '0.0102';
+    $VERSION = '0.0104';
 
     $UNDEF_CHAR = 'x';
 
@@ -899,6 +899,21 @@ sub to_recurrence
     return $r;
 }
 
+sub to_spanset
+{
+    my $self = shift;
+    for ( qw( second minute hour day month year ) )
+    {
+        if ( $self->has( $_ ) )
+        {
+            return DateTime::SpanSet->from_set_and_duration (
+                set => $self->to_recurrence,
+                $_ . 's' => 1,
+            );
+        }
+    }
+    return $self->to_span;
+}
 
 sub STORABLE_freeze
 {
@@ -1373,6 +1388,19 @@ following incomplete datetime would generate the set of I<all seconds>
 in 2003:
 
   2003-xx-xxTxx:xx:xx
+
+Recurrences are generated with up to 1 second resolution. 
+The C<nanosecond> value is ignored.
+
+=item * to_spanset
+
+This method generates the set of all possible spans that fit into
+an incomplete datetime definition.
+
+  $dti = DateTime::Incomplete->new( month => 12, day => 24 );
+  $dtset1 = $dti->to_spanset;
+  # Christmas recurrence, from xxxx-12-24T00:00:00 
+  #                         to xxxx-12-25T00:00:00
 
 =item * start
 
