@@ -348,70 +348,90 @@ sub iso8601 { join 'T', $_[0]->ymd('-'), $_[0]->hms(':') }
 
 # "strftime"
 
-# Copied from DateTime - we can't import %formats 
-# because it is a local variable.
-#
-# The changes made here may be imported back to DateTime in a future version.
-# Changes are marked with " # <--- change ";
-# _format_nanosecs was rewritten.
-# Added method: _am_pm
-
+# Modified from DateTime::strftime %formats; many changes.
 my %formats =
-    ( 'a' => sub { $_[0]->day_abbr },
-      'A' => sub { $_[0]->day_name },
-      'b' => sub { $_[0]->month_abbr },
-      'B' => sub { $_[0]->month_name },
+    ( 'a' => sub { $_[0]->has_day ? 
+                   $_[0]->day_abbr :
+                   $UNDEF_CHAR x 3 },
+      'A' => sub { $_[0]->has_day ? 
+                   $_[0]->day_name :
+                   $UNDEF_CHAR x 5 },
+      'b' => sub { $_[0]->has_month ? 
+                   $_[0]->month_abbr :
+                   $UNDEF_CHAR x 3 },
+      'B' => sub { $_[0]->has_month ? 
+                   $_[0]->month_name :
+                   $UNDEF_CHAR x 5 },
       'c' => sub { $_[0]->has_locale ?
                    $_[0]->strftime( $_[0]->locale->default_datetime_format ) :
-                   $_[0]->datetime }, # <--- change
-      'C' => sub { int( $_[0]->year / 100 ) },
-      'd' => sub { sprintf( '%02d', $_[0]->day_of_month ) },
+                   $_[0]->datetime }, 
+      'C' => sub { $_[0]->has_year ?
+                   int( $_[0]->year / 100 ) :
+                   $UNDEF_CHAR x 2},
+      'd' => sub { $_[0]->_day },
       'D' => sub { $_[0]->strftime( '%m/%d/%y' ) },
-      'e' => sub { sprintf( '%2d', $_[0]->day_of_month ) },
+      'e' => sub { $_[0]->has_month ? 
+                   sprintf( '%2d', $_[0]->day_of_month ) :
+                   " $UNDEF_CHAR" },
       'F' => sub { $_[0]->ymd('-') },
       'g' => sub { substr( $_[0]->week_year, -2 ) },
       'G' => sub { $_[0]->week_year },
-      'H' => sub { $_[0]->_hour },    # <--- change
-      'I' => sub { sprintf( '%02d', $_[0]->hour_12 ) },
-      'j' => sub { $_[0]->day_of_year },
-      'k' => sub { $_[0]->_hour },    # <--- change
-      'l' => sub { sprintf( '%2d', $_[0]->hour_12 ) },
-      'm' => sub { $_[0]->_month },   # <--- change
-      'M' => sub { $_[0]->_minute },  # <--- change
+      'H' => sub { $_[0]->_hour },   
+      'I' => sub { $_[0]->has_hour ? 
+                   sprintf( '%02d', $_[0]->hour_12 ) :
+                   $UNDEF_CHAR x 2 },
+      'j' => sub { defined $_[0]->day_of_year ? 
+                   $_[0]->day_of_year :
+                   $UNDEF_CHAR x 3 },
+      'k' => sub { $_[0]->_hour },   
+      'l' => sub { $_[0]->has_hour ? 
+                   sprintf( '%2d', $_[0]->hour_12 ) :
+                   " $UNDEF_CHAR" },
+      'm' => sub { $_[0]->_month },  
+      'M' => sub { $_[0]->_minute }, 
       'n' => sub { "\n" }, # should this be OS-sensitive?
-      'N' => sub { (shift)->_format_nanosecs( @_ ) },     # <--- change
-      'p' => sub { $_[0]->_am_pm( $_[0] ) },              # <--- change
-      'P' => sub { lc $_[0]->_am_pm( $_[0] ) },           # <--- change
+      'N' => sub { (shift)->_format_nanosecs( @_ ) },   
+      'p' => sub { $_[0]->_am_pm },           
+      'P' => sub { lc $_[0]->_am_pm },     
       'r' => sub { $_[0]->strftime( '%I:%M:%S %p' ) },
       'R' => sub { $_[0]->strftime( '%H:%M' ) },
-      's' => sub { $_[0]->_epoch },   # <--- change
-      'S' => sub { $_[0]->_second },  # <--- change
+      's' => sub { $_[0]->_epoch }, 
+      'S' => sub { $_[0]->_second }, 
       't' => sub { "\t" },
       'T' => sub { $_[0]->strftime( '%H:%M:%S' ) },
       'u' => sub { $_[0]->day_of_week },
       # algorithm from Date::Format::wkyr
       'U' => sub { my $dow = $_[0]->day_of_week;
+                   return $UNDEF_CHAR x 2 unless defined $dow;
                    $dow = 0 if $dow == 7; # convert to 0-6, Sun-Sat
                    my $doy = $_[0]->day_of_year - 1;
                    return int( ( $doy - $dow + 13 ) / 7 - 1 )
                  },
       'w' => sub { my $dow = $_[0]->day_of_week;
+                   return $UNDEF_CHAR unless defined $dow;
                    return $dow % 7;
                  },
       'W' => sub { my $dow = $_[0]->day_of_week;
+                   return $UNDEF_CHAR x 2 unless defined $dow;
                    my $doy = $_[0]->day_of_year - 1;
                    return int( ( $doy - $dow + 13 ) / 7 - 1 )
                  },
       'x' => sub { $_[0]->has_locale ? 
                    $_[0]->strftime( $_[0]->locale->default_date_format ) :
-                   $_[0]->date }, # <--- change
-      'X' => sub { $_[0]->locale ?
+                   $_[0]->date },
+      'X' => sub { $_[0]->has_locale ?
                    $_[0]->strftime( $_[0]->locale->default_time_format ) :
-                   $_[0]->time }, # <--- change
-      'y' => sub { sprintf( '%02d', substr( $_[0]->year, -2 ) ) },
-      'Y' => sub { $_[0]->_year },    # <--- change
-      'z' => sub { DateTime::TimeZone::offset_as_string( $_[0]->offset ) },
-      'Z' => sub { $_[0]->time_zone_short_name },      # <--- change
+                   $_[0]->time },
+      'y' => sub { $_[0]->has_year ?  
+                   sprintf( '%02d', substr( $_[0]->year, -2 ) ) :
+                   $UNDEF_CHAR x 2 },
+      'Y' => sub { $_[0]->_year },    
+      'z' => sub { defined $_[0]->time_zone ?
+                   DateTime::TimeZone::offset_as_string( $_[0]->offset ) :
+                   $UNDEF_CHAR x 5 },
+      'Z' => sub { defined $_[0]->time_zone ?
+                   $_[0]->time_zone_short_name :
+                   $UNDEF_CHAR x 5 },    
       '%' => sub { '%' },
     );
 
@@ -436,9 +456,11 @@ sub _format_nanosecs
     my $self = shift;
     my $precision = shift || 9;
 
+    return $UNDEF_CHAR x $precision unless defined $self->nanosecond;
+
     # rd_nanosecs might contain a fractional separator
     my ( $ret, $frac ) = split /[.,]/, $self->_nanosecond;
-    $ret = sprintf "09d" => $ret unless length( $ret ) == 9;
+    $ret = sprintf "09d" => $ret;  # unless length( $ret ) == 9;
     $ret .= $frac if $frac;
 
     return substr( $ret, 0, $precision );
@@ -456,7 +478,13 @@ sub strftime
         $f =~ s/
                 %{(\w+)}
                /
-                $self->$1() if $self->can($1);
+                if ( $self->can($1) ) 
+                {
+                    my $tmp = $self->$1();
+                    return $tmp if defined $tmp; 
+                    return $UNDEF_CHAR x $FIELD_LENGTH{$1} if exists $FIELD_LENGTH{$1};
+                    $UNDEF_CHAR x 2;
+                }
                /sgex;
 
         # regex from Date::Format - thanks Graham!
@@ -673,9 +701,6 @@ sub closest
 
     return $dt1 unless defined $dt2;
     return $dt2 unless defined $dt1;
-
-    # warn "self ".$self->datetime." base ".$base->datetime;
-    # warn "dt1 ".$dt1->datetime." dt2 ".$dt2->datetime;
 
     my $delta = $base - $dt1;
     return $dt1 if ( $dt2 - $delta ) >= $base;
