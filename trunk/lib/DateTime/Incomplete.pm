@@ -590,18 +590,15 @@ sub to_datetime
 
     my $result = $param{base}->clone;
     my ($key, $value);
-    while (($key, $value) = each %{$self->{has}} ) {
+    for $key ( reverse @FIELDS_SORTED )
+    {
+        $value = $self->{has}{$key};
         next unless defined $value;
         if ( $key eq 'time_zone' )
         {
             $result->set_time_zone( $value );
             next;
         }        
-        # if ( $key eq 'locale' )
-        # {
-        #    $result->set_locale( $value );
-        #    next;
-        # }
         $result->set( $key => $value );
     }
     return $result;
