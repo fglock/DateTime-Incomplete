@@ -2,6 +2,7 @@ package DateTime::Incomplete;
 
 use strict;
 
+use DateTime::Set 0.0901;
 use DateTime::Event::Recurrence;
 use Params::Validate qw( validate );
 

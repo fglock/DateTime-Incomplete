@@ -19,7 +19,8 @@ TODO file for DateTime::Incomplete
   mixing string and object time_zones;
   time_zone-only and locale-only DT::I objects.
 
-- DT::Set needs a fix to avoid generating big in-memory sets,
+- FIXED: (experimental)
+  DT::Set needs a fix to avoid generating big in-memory sets,
   when the result of an operation is a finite set.
   (see SKIP in t/02incomplete.t)
 
