@@ -1,5 +1,8 @@
 Changes file for DateTime::Incomplete
 
+- Included has() method, contributed by Rick Measham
+
+
 0.0101  2003-11-03
 - runs in Perl 5.00503.  
   Dave Rolsky & Flavio S. Glock, creating a cvs conflict :)

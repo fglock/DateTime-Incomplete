@@ -283,6 +283,24 @@ sub _has
     defined $_[0]->{has}{$_[1]} ? 1 : 0;
 }
 
+sub has {  
+    # called with parameters you get true or false  
+    # called with no params and you get a list of fields  
+    my $self = shift;  
+    if (@_) {  
+        foreach (@_) {  
+            return 0 unless $self->_has( $_ )  
+        }  
+        return 1  
+    }  
+    my @has = ();
+    for ( keys %{$_[0]->{has}} )
+    {
+        push @has, $_ if $self->_has( $_ );
+    }
+    return @has;
+}  
+
 sub set_time_zone
 {
     die "set_time_zone() requires a time_zone value" unless $#_ == 1;
@@ -1014,6 +1032,18 @@ available in C<DateTime.pm>, such as C<mon()>, C<mday()>, etc.
 
 Returns a boolean value indicating whether the corresponding value is
 defined.
+
+=item * has
+
+    @fields = $dti->has;   # list of fields
+
+Without arguments, returns a list containing the names of 
+the fields that are defined.
+
+    $has_date = $dti->has( 'year', 'month', 'day' );
+
+With an argument list, returns a boolean value indicating whether 
+all fields in the list are defined.
 
 =item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
 
