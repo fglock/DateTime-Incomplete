@@ -20,7 +20,7 @@ BEGIN
     %FIELD_LENGTH = ( 
                 year => 4, month => 2, day => 2, 
                 hour => 2, minute => 2, second => 2, nanosecond => 9,
-                time_zone => 3, locale => 3 );
+                time_zone => 0, locale => 0 );
 
     # Generate named accessors
 
@@ -33,6 +33,8 @@ BEGIN
         next if $field eq 'nanosecond';
 
 	my $length = $FIELD_LENGTH{$field};
+
+	next unless $length;
 
 	*{"_$field"} = sub { defined $_[0]->$field() ?
 			     sprintf( "%0.${length}d", $_[0]->$field() ) :
