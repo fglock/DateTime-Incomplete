@@ -65,6 +65,7 @@ while (<DATA>)
                             month => 1,
                             day => 10,
                             time_zone => 'UTC',
+                            locale => 'en',
                           );
 
     my ($y, $d) = $dt->strftime( '%Y', '%d' );
@@ -78,7 +79,8 @@ while (<DATA>)
 {
     my $dt = $DateTime->new( year => 2003,
                             hour => 0,
-                            minute => 0
+                            minute => 0,
+                            locale => 'en',
                           ) ;
 
     is( $dt->strftime('%I %M %p'), '12 00 AM', 'formatting of hours as 1-12' );
