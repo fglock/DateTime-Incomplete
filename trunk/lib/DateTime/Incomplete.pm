@@ -9,7 +9,7 @@ use Params::Validate qw( validate );
 use vars qw( $VERSION );
 
 my $UNDEF_CHAR;
-my ( @FIELDS, %FIELD_LENGTH, @TIME_FIELDS );
+my ( @FIELDS, %FIELD_LENGTH, @TIME_FIELDS, @FIELDS_SORTED );
 
 BEGIN
 {
@@ -24,6 +24,10 @@ BEGIN
                 hour => 2, minute => 2, second => 2, nanosecond => 9,
                 time_zone => 0, locale => 0 );
     @TIME_FIELDS = qw( hour minute second nanosecond );
+
+    @FIELDS_SORTED = qw( year month day 
+                hour minute second nanosecond 
+                time_zone locale );
 
     # Generate named accessors
 
@@ -294,7 +298,8 @@ sub has {
         return 1  
     }  
     my @has = ();
-    for ( keys %{$_[0]->{has}} )
+    # warn "keys ". join(",", sort keys %{$self->{has}} );
+    for ( @FIELDS_SORTED )
     {
         push @has, $_ if $self->_has( $_ );
     }

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 36;
+use Test::More tests => 39;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -182,6 +182,12 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
       $dti_no_day->set( day => 24 );         # xx-12-24T00:00:00
       $dti_no_day->set( minute => undef );   # xx-12-24T00:xx:00
 
+      # has
+      my @fields = $dti_no_day->has;
+      is( "@fields", "month day hour second nanosecond", "fields it has" );
+
+      is( $dti_no_day->has( 'year' ) , 0, 'has no year' );
+      is( $dti_no_day->has( 'month' ), 1, 'has month' );
 
       # to_recurrence
 
