@@ -42,7 +42,7 @@ BEGIN
     }
 
     # Generate DateTime read-only functions
-    for my $field ( qw/
+    for my $meth ( qw/
         week week_year week_number week_of_month
         day_name day_abbr 
         day_of_week wday dow
@@ -53,17 +53,40 @@ BEGIN
         / )
     {
 	no strict 'refs';
-	*{$field} = sub { $_[0]->_datetime_method( $field, 'year', 'month', 'day' ) };
+	*{$meth} = sub { $_[0]->_datetime_method( $meth, 'year', 'month', 'day' ) };
     }
 
-    for my $field ( qw/
+    for my $meth ( qw/
         is_leap_year ce_year era year_with_era
         / )
     {
 	no strict 'refs';
-	*{$field} = sub { $_[0]->_datetime_method( $field, 'year' ) };
+	*{$meth} = sub { $_[0]->_datetime_method( $meth, 'year' ) };
     }
 
+    for my $meth ( qw/
+        month_name month_abbr
+        / )
+    {
+	no strict 'refs';
+	*{$meth} = sub { $_[0]->_datetime_method( $meth, 'month' ) };
+    }
+
+    for my $meth ( qw/
+        hour_1 hour_12 hour_12_0
+        / )
+    {
+	no strict 'refs';
+	*{$meth} = sub { $_[0]->_datetime_method( $meth, 'hour' ) };
+    }
+
+    for my $meth ( qw/
+        millisecond microsecond
+        / )
+    {
+	no strict 'refs';
+	*{$meth} = sub { $_[0]->_datetime_method( $meth, 'nanosecond' ) };
+    }
 }
 
 sub _nanosecond {
@@ -104,30 +127,9 @@ sub _datetime_method
 sub last_day_of_month {
     $_[0]->_datetime_method( 'last_day_of_month', 'year', 'month' );
 }
-sub month_name {
-    $_[0]->_datetime_method( 'month_name', 'month' );
-}
-sub month_abbr {
-    $_[0]->_datetime_method( 'month_abbr', 'month' );
-}
 
-sub hour_1 {
-    $_[0]->_datetime_method( 'hour_1', 'hour' );
-}
-sub hour_12 {
-    $_[0]->_datetime_method( 'hour_12', 'hour' );
-}
-sub hour_12_0 {
-    $_[0]->_datetime_method( 'hour_12_0', 'hour' );
-}
 sub fractional_second {
     $_[0]->_datetime_method( 'fractional_second', 'second', 'nanosecond' );
-}
-sub millisecond {
-    $_[0]->_datetime_method( 'millisecond', 'nanosecond' );
-}
-sub microsecond {
-    $_[0]->_datetime_method( 'microsecond', 'nanosecond' );
 }
 
 sub offset {
