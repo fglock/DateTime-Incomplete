@@ -32,35 +32,23 @@ BEGIN
 
     # Generate named accessors
 
-    for ( keys %FIELD_LENGTH )
+    for my $field ( keys %FIELD_LENGTH )
     {
-      eval " 
-        # year() - plain value
-        sub $_ { 
-            \$_[0]->get( '$_' ) 
-        }
+	no strict 'refs';
+	*{$field} = sub { $_[0]->_get($field) };
+	*{"has_$field"} = sub { $_[0]->_has($field) };
 
-        # has_year() - boolean
-        sub has_$_ { 
-            \$_[0]->has( '$_' ) 
-        }   
-      ";
-  
-        if ( $_ ne 'nanosecond' )
-        {
-            eval "
-                # _year() - stringification
-                sub _$_  { 
-                    defined \$_[0]->$_ ? 
-                    sprintf( \"%0.$FIELD_LENGTH{$_}d\", \$_[0]->$_ ) : 
-                    \$UNDEF_CHAR x $FIELD_LENGTH{$_} 
-                } 
-            ";
-        }
+        next if $field eq 'nanosecond';
+
+	my $length = $FIELD_LENGTH{$field};
+
+	*{"_$field"} = sub { defined $_[0]->$field() ?
+			     sprintf( "%0.${length}d", $_[0]->$field() ) :
+			     $UNDEF_CHAR x $length };
     }
 
     # Generate DateTime read-only functions
-    for ( qw/
+    for my $field ( qw/
         week week_year week_number week_of_month
         day_name day_abbr 
         day_of_week wday dow
@@ -70,18 +58,16 @@ BEGIN
         jd mjd
         / )
     {
-        eval "sub $_ {
-            \$_[0]->_datetime_method( $_, 'year', 'month', 'day' )
-        }";
+	no strict 'refs';
+	*{$field} = sub { $_[0]->_datetime_method( $field, 'year', 'month', 'day' ) };
     }
 
-    for ( qw/
+    for my $field ( qw/
         is_leap_year ce_year era year_with_era
         / )
     {
-        eval "sub $_ {
-            \$_[0]->_datetime_method( $_, 'year' )
-        }";
+	no strict 'refs';
+	*{$field} = sub { $_[0]->_datetime_method( $field, 'year' ) };
     }
 
 }
@@ -106,7 +92,7 @@ sub _datetime_method
     my $date;
     for ( @fields )
     {
-        return undef unless ( $self->has($_) )
+        return undef unless ( $self->_has($_) )
     }
     my %param; 
 
@@ -259,12 +245,12 @@ sub set
     $_[0]->{has}{ $_[1] } = $_[2];
 }
 
-sub get
+sub _get
 {
     $_[0]->{has}{$_[1]};
 }
 
-sub has
+sub _has
 {
     defined $_[0]->{has}{$_[1]} ? 1 : 0;
 }
@@ -1092,23 +1078,6 @@ methods in C<DateTime::Set> class.
 
 The datetimes are generated with 1 nanosecond precision. The last "time"
 value of a given day is 23:59:59.999999999 (for non leapsecond days).
-
-
-=item * get
-
-  $month = $dti->get( 'month' ); 
-
-Returns the datetime field value, or C<undef>. 
-
-You may want to use C<get_month> instead.
-
-
-=item * has
-
-  $isfrac = $dti->has( 'nanosecond' ); 
-
-Returns 1 if the datetime field value is defined; otherwise it returns 0. 
-You may want to use C<has_nanosecond> instead.
 
 
 =back
