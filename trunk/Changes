@@ -1,6 +1,9 @@
 Changes file for DateTime::Incomplete
 
-- to_datetime() uses "today" as a base date, is none is given.
+0.0102  2003-11-06
+- to_datetime() uses "today" as a base date, if none was given.
+  The following methods are affected by this change:
+  epoch, hires_epoch, is_dst, utc_rd_values, utc_rd_as_seconds, sprintf("%s")
 - can_be_datetime()
 - has_date(), has_time()
 - defined_fields() method, contributed by Rick Measham

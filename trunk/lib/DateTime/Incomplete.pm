@@ -13,7 +13,7 @@ my ( @FIELDS, %FIELD_LENGTH, @TIME_FIELDS, @FIELDS_SORTED );
 
 BEGIN
 {
-    $VERSION = '0.0101';
+    $VERSION = '0.0102';
 
     $UNDEF_CHAR = 'x';
 
