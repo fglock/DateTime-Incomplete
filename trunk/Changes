@@ -1,5 +1,7 @@
 Changes file for DateTime::Incomplete
 
+   has(), get()
+
 0.00_03  2003-07-21
    New API: new( ..., base => $dt )
             set_base( $dt )

@@ -79,6 +79,16 @@ sub set
     $_[0]->{has}{ $_[1] } = $_[2];
 }
 
+sub get
+{
+    $_[0]->{has}{$_[1]};
+}
+
+sub has
+{
+    defined $_[0]->{has}{$_[1]} ? 1 : 0;
+}
+
 sub set_time_zone
 {
     die "set() requires a time_zone value" unless $#_ == 1;
@@ -100,14 +110,14 @@ sub clone
 sub is_finite { 1 }
 sub is_infinite { 0 }
 
-sub year       { $_[0]->{has}{year} }
-sub month      { $_[0]->{has}{month} }
-sub day        { $_[0]->{has}{day} }
-sub hour       { $_[0]->{has}{hour} }
-sub minute     { $_[0]->{has}{minute} }
-sub second     { $_[0]->{has}{second} }
-sub nanosecond { $_[0]->{has}{nanosecond} }
-sub time_zone  { $_[0]->{has}{time_zone} }
+sub year       { $_[0]->get( 'year' ) }
+sub month      { $_[0]->get( 'month' ) }
+sub day        { $_[0]->get( 'day' ) }
+sub hour       { $_[0]->get( 'hour' ) }
+sub minute     { $_[0]->get( 'minute' ) }
+sub second     { $_[0]->get( 'second' ) }
+sub nanosecond { $_[0]->get( 'nanosecond' ) }
+sub time_zone  { $_[0]->get( 'time_zone' ) }
 
 
 # Internal stringification methods.
@@ -337,6 +347,10 @@ Use this to define or undefine a datetime field:
   $dti->set( day => 24 );
   $dti->set( day => undef );
 
+=item * clone
+
+Creates a new object with the same datetime.
+
 =item * set_time_zone
 
 This method accepts either a time zone object or a string that can be
@@ -345,19 +359,6 @@ passed as the "name" parameter to C<< DateTime::TimeZone->new() >>.
 Incomplete dates don't know the "local time" concept:
 If the new time zone's offset is different from the old time zone,
 no local time adjust is made.
-
-=item * set_base
-
-  $dti->set_base( $dt );
-
-The "base" parameter is used as a default base datetime 
-in the "to_datetime" method. It is also used for validating
-inputs to the "set" method.
-
-
-=item * clone
-
-Creates a new object with the same datetime.
 
 =item * year, month, day, hour, minute, second, nanosecond
 
@@ -387,6 +388,26 @@ Incomplete dates are not "Infinite".
 =head1 DATETIME::INCOMPLETE METHODS
 
 =over 4
+
+=item * get
+
+  $kin = $dti->get( 'kin' );  # a Mayan time
+
+Return the datetime field value, or C<undef>.
+
+=item * has
+
+  $isfrac = $dti->has( 'nanosecond' ); 
+
+Returns 1 if the datetime field value is defined; otherwise it returns 0.
+
+=item * set_base
+
+  $dti->set_base( $dt );
+
+The "base" parameter is used as a default base datetime 
+in the "to_datetime" method. It is also used for validating
+inputs to the "set" method.
 
 =item * is_undef
 

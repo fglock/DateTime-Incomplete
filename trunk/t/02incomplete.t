@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 22;
+use Test::More tests => 24;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -38,10 +38,17 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     is( $dti->datetime , $dt->datetime, 
         'new() matches DT->new' );
 
+
+    is( $dti->has( 'year' ) , 1,
+        'has year' );
+
     $dti->set( year => undef );
     $str =~ s/^2003/$UNDEF4/;
     is( $dti->datetime , $str,
         'undef year' );
+
+    is( $dti->has( 'year' ) , 0,
+        'has no year' );
 
     $dti->set( month => undef );
     $str =~ s/-01-/-$UNDEF2-/;
