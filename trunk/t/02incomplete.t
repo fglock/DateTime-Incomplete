@@ -7,9 +7,9 @@ use DateTime;
 use DateTime::Incomplete;
 
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
-$UNDEF_CHAR = 'x';
-$UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
-$UNDEF2 = $UNDEF_CHAR x 2;   # xx
+$UNDEF_CHAR = $DateTime::Incomplete::UNDEF_CHAR;
+$UNDEF4 = $UNDEF_CHAR x 4;   
+$UNDEF2 = $UNDEF_CHAR x 2;  
 
 {
     # Tests for new(), set(), datetime()

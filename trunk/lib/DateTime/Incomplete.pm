@@ -15,7 +15,7 @@ BEGIN
     $UNDEF2 = $UNDEF_CHAR x 2;   # xx
 
     # to_recurrence() method requires a recurrence module.
-    # otherwise, it is not necessary.
+    # otherwise, it is not required.
     $RECURRENCE_MODULE = 'DateTime::Event::Recurrence';
     $CAN_RECURRENCE = 0;
     eval "
@@ -59,6 +59,9 @@ sub set_time_zone
 
 sub clone { bless { %{ $_[0] } }, ref $_[0] }
 
+sub is_finite { 1 }
+sub is_infinite { 0 }
+
 sub year       { $_[0]->{year} }
 sub month      { $_[0]->{month} }
 sub day        { $_[0]->{day} }
@@ -86,6 +89,20 @@ sub ymd
     return $self->_year . $sep. $self->_month . $sep . $self->_day;
 }
 *date = \&ymd;
+
+sub mdy
+{
+    my ( $self, $sep ) = @_;
+    $sep = '-' unless defined $sep;
+    return $self->_month . $sep. $self->_day . $sep . $self->_year;
+}
+
+sub dmy
+{
+    my ( $self, $sep ) = @_;
+    $sep = '-' unless defined $sep;
+    return $self->_day . $sep. $self->_month . $sep . $self->_year;
+}
 
 sub hms
 {
@@ -293,10 +310,18 @@ Return the field value, or C<undef>.
 This returns the C<DateTime::TimeZone> object for the datetime object,
 or C<undef>.
 
-=item * datetime, ymd, date, hms, time, iso8601
+=item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
 
 These are equivalent to DateTime stringification methods with the same name, 
 except that undefined fields are replaced by 'xx' or 'xxxx'.
+
+=item * is_finite, is_infinite
+
+These methods allow you to distinguish normal datetime objects from
+infinite ones.  Infinite datetime objects are documented in
+L<DateTime::Infinite|DateTime::Infinite>.
+
+Incomplete dates are not "Infinite".
 
 
 =back
@@ -378,7 +403,7 @@ For example:
 
 =head1 TODO - "MAY-BE-USEFUL" METHODS
 
-These are some ideas for new methods, that are not implemented.
+These are some ideas for new methods or parameters, that are not implemented.
 Let us know if any of these might be useful for you,
 at <datetime@perl.org>.
 
@@ -396,7 +421,7 @@ or is that simply not defined?
 
 =item * to_span
 
-=item * other C<DateTime> methods
+=item * other C<DateTime> methods (strftime, locale ... )
 
 =item * other C<DateTime::Set> methods (next/previous/...)
 
@@ -404,6 +429,15 @@ or is that simply not defined?
 
 $dti->set( week => 10 )
 
+=item * from_datetime
+
+=item * to_recurrence( resolution => 'days' )
+
+Generates a recurrence of such 'density' (now it always defaults to seconds)
+
+=item * is_incomplete/is_complete
+
+How do we know it is complete?
 
 =back
 

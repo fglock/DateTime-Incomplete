@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+   Implemented to_recurrence
    Implemented is_undef, to_datetime, contains
    All methods in DATETIME-LIKE section are implemented. Most are tested.
 
