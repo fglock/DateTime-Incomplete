@@ -32,21 +32,13 @@ sub new
     # parameter checking is done in "set" method.
     my $class = shift;
     my %param = @_;
-
-    # There is no point in accepting 'language', because there is no
-    # set_language() method in DateTime (yet)
-    die "Parameter 'language' is not supported" if exists $param{language};
-
     my $base = delete $param{base};
     die "base must be a datetime" if defined $base && 
                              ! UNIVERSAL::can( $base, 'utc_rd_values' );
-
     my $self = bless { 
         has => \%param,
     }, $class;
-
     $self->set_base( $base );
-
     return $self;
 }
 
@@ -95,9 +87,16 @@ sub has
 
 sub set_time_zone
 {
-    die "set() requires a time_zone value" unless $#_ == 1;
+    die "set_time_zone() requires a time_zone value" unless $#_ == 1;
     $_[0]->{base}->set_time_zone( $_[1] ) if defined $_[0]->{base};
     $_[0]->{has}{time_zone} = $_[1];
+}
+
+sub set_locale
+{
+    die "set_locale() requires a locale value" unless $#_ == 1;
+    $_[0]->{base}->set_locale( $_[1] ) if defined $_[0]->{base};
+    $_[0]->{has}{locale} = $_[1];
 }
 
 sub clone 
@@ -115,12 +114,16 @@ sub is_finite { 1 }
 sub is_infinite { 0 }
 
 
-for ( qw/ year month day hour minute second nanosecond time_zone / )
+for ( qw/ year month day hour minute second nanosecond time_zone locale / )
 {
     eval " sub $_ { \$_[0]->get( '$_' ) } ";      # year()
     eval " sub has_$_ { \$_[0]->has( '$_' ) } ";  # has_year()
 }
-
+*mon = \&month;
+*day_of_month = \&day;
+*mday = \&day;
+*min = \&minute;
+*sec = \&second;
 
 # Internal stringification methods.
 # some of these methods are not used, but they are defined just in case.
@@ -195,6 +198,11 @@ sub to_datetime
             $result->set_time_zone( $value );
             next;
         }        
+        if ( $key eq 'locale' )
+        {
+            $result->set_locale( $value );
+            next;
+        }
         $result->set( $key => $value );
     }
     return $result;
@@ -211,9 +219,10 @@ sub contains
     my ($key, $value);
     while (($key, $value) = each %{$self->{has}} ) {
         next unless defined $value;
-        if ( $key eq 'time_zone' )
+        if ( $key eq 'time_zone' ||
+             $key eq 'locale' )
         {
-            # TODO! - time_zone is ignored.
+            # TODO! - time_zone and locale are ignored.
             next;
         }        
         return 0 unless $dt->$key == $value;
@@ -489,14 +498,13 @@ Creates a new incomplete date:
 This class method accepts parameters for each date and
 time component: "year", "month", "day", "hour",
 "minute", "second", "nanosecond".  Additionally, it
-accepts a "time_zone" parameter and a "base" parameter.
+accepts a "time_zone", a "locale" parameter,
+and a "base" parameter.
 
 The "base" parameter is used as a default base datetime 
 in the "to_datetime" method. It is also used for validating
 inputs to the "set" method. 
 There is no default "base".
-
-Note: There is no "language" or "locale" parameter.
 
 C<new> without parameters creates a completely undefined datetime:
 
@@ -535,8 +543,10 @@ no local time adjust is made.
 
 Return the field value, or C<undef>.
 
+These values can also be accessed using the methods:
+mon, day_of_month, mday, min, sec.
 
-=item * has_year, has_month, has_day, has_hour, has_minute, has_second, has_nanosecond
+=item * has_year, has_month, has_day, has_hour, has_minute, has_second, has_nanosecond, has_time_zone, has_locale
 
 Returns 1 if the value is defined; otherwise it returns 0.
 
@@ -544,6 +554,11 @@ Returns 1 if the value is defined; otherwise it returns 0.
 =item * time_zone
 
 This returns the C<DateTime::TimeZone> object for the datetime object,
+or C<undef>.
+
+=item * locale
+
+This returns the C<DateTime::Locale> object for the datetime object,
 or C<undef>.
 
 =item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
@@ -688,7 +703,7 @@ Note: The definition of C<previous> and C<next> is different from the
 methods in C<DateTime::Set> class.
 
 The datetimes are generated with 1 nanosecond precision. The last "time"
-value of a given day is 23:59:59.999999999 (non leapsecond days).
+value of a given day is 23:59:59.999999999 (for non leapsecond days).
 
 =back
 
@@ -705,14 +720,12 @@ These methods are not implemented in C<DateTime::Incomplete>
   from_day_of_year
   ce_year, era, year_with_era
   month_name, month_abbr
-  day_of_month, mday
   day_of_week, wday, dow
   day_name, day_abbr
   day_of_year, doy
   quarter, day_of_quarter, doq
   weekday_of_month
   hour_1, hour_12, hour_12_0
-  min, sec
   fractional_second, millisecond, microsecond
   is_leap_year
   week, week_year, week_number, week_of_month
@@ -729,8 +742,6 @@ There are no class methods. The following are not implemented:
   compare, compare_ignore_floating
 
 There are no "Storable" class hooks.
-
-The C<new> method doesn't have the 'language' parameter.
 
 
 =head1 AUTHORS

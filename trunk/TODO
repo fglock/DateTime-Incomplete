@@ -1,10 +1,8 @@
 TODO file for DateTime::Incomplete
 
-- more tests for next/previous with year and nanosecond
+- more tests for next/previous/closest with year and nanosecond
 
-- time_zone tests
-
-- locale implementation
+- locale and time_zone tests: mixing string and object time_zones
 
 IDEAS
 
@@ -26,7 +24,9 @@ or is that simply not defined?
 
 $dti->set( week => 10 )
 
-* from_datetime
+* from_datetime / today / now
+
+* truncate
 
 * to_recurrence( resolution => 'days' )
 

@@ -1,5 +1,8 @@
 Changes file for DateTime::Incomplete
 
+   locale, set_locale
+   some aliases added, for DateTime compatibility
+
 0.00_04  2003-07-22
    base
    next / previous / closest
