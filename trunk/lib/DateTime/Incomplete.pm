@@ -288,17 +288,18 @@ sub _has
 }
 
 sub has {  
-    # called with parameters you get true or false  
-    # called with no params and you get a list of fields  
+    # returns true or false  
     my $self = shift;  
-    if (@_) {  
-        foreach (@_) {  
-            return 0 unless $self->_has( $_ )  
-        }  
-        return 1  
+    foreach (@_) {  
+        return 0 unless $self->_has( $_ )  
     }  
+    return 1  
+}  
+
+sub defined_fields {  
+    # no params, returns a list of fields  
+    my $self = shift;  
     my @has = ();
-    # warn "keys ". join(",", sort keys %{$self->{has}} );
     for ( @FIELDS_SORTED )
     {
         push @has, $_ if $self->_has( $_ );
@@ -1037,15 +1038,15 @@ defined.
 
 =item * has
 
-    @fields = $dti->has;   # list of fields
-
-Without arguments, returns a list containing the names of 
-the fields that are defined.
-
     $has_date = $dti->has( 'year', 'month', 'day' );
 
-With an argument list, returns a boolean value indicating whether 
-all fields in the list are defined.
+Returns a boolean value indicating whether all fields in the argument list are defined.
+
+=item * defined_fields
+
+    @fields = $dti->defined_fields;   # list of field names
+
+Returns a list containing the names of the fields that are defined.
 
 =item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
 

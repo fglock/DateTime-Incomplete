@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+- defined_fields() method, contributed by Rick Measham
 - to_datetime() sets fields in a known order,
   instead of hash-order.  Based on a patch by Rick Measham
 - Included has() method, contributed by Rick Measham

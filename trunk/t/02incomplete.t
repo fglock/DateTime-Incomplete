@@ -183,7 +183,7 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
       $dti_no_day->set( minute => undef );   # xx-12-24T00:xx:00
 
       # has
-      my @fields = $dti_no_day->has;
+      my @fields = $dti_no_day->defined_fields;
       is( "@fields", "month day hour second nanosecond", "fields it has" );
 
       is( $dti_no_day->has( 'year' ) , 0, 'has no year' );
