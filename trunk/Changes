@@ -1,5 +1,9 @@
 Changes file for DateTime::Incomplete
 
+0.00_03  2003-07-21
+   New API: new( ..., base => $dt )
+            set_base( $dt )
+            to_datetime() without base
    Implemented to_recurrence
    Implemented is_undef, to_datetime, contains
    All methods in DATETIME-LIKE section are implemented. Most are tested.

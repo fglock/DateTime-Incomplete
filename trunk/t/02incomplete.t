@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 22;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -77,6 +77,11 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     is( $dt->datetime , $dt2->datetime,
         'to_datetime' );
 
+    my $dti2 = $dti_half->clone;
+    $dti2->set_base( $dt );
+    $dt2 = $dti2->to_datetime;
+    is( $dt->datetime , $dt2->datetime,
+        'to_datetime + set_base' );
 
     # Tests contains
 

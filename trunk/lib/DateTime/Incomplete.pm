@@ -8,7 +8,7 @@ use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
 
 BEGIN
 {
-    $VERSION = '0.00_02';
+    $VERSION = '0.00_03';
 
     $UNDEF_CHAR = 'x';
     $UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
@@ -38,9 +38,36 @@ sub new
     # set_language() method in DateTime (yet)
     die "Parameter 'language' is not supported" if exists $param{language};
 
-    # That's all it takes
-    my $self = bless { %param }, $class;
+    my $base = delete $param{base};
+    die "base must be a datetime" if defined $base && 
+                             ! UNIVERSAL::can( $base, 'utc_rd_values' );
+
+    my $self = bless { 
+        has => \%param,
+    }, $class;
+
+    $self->set_base( $base );
+
     return $self;
+}
+
+sub set_base 
+{
+    my $self = shift;
+    $self->{base} = shift;
+    if ( defined $self->{base} ) 
+    {
+        my ($key, $value);
+        while (($key, $value) = each %{$self->{has}} ) {
+            next unless defined $value;
+            if ( $key eq 'time_zone' )
+            {
+                $self->{base}->set_time_zone( $value );
+                next;
+            }        
+            $self->{base}->set( $key => $value );
+        }
+    }
 }
 
 sub set
@@ -48,28 +75,39 @@ sub set
     # There is not much parameter checking, because we don't know in advance
     # which Calendar will be used. But this may change later.
     die "set() requires a field name and a value" unless $#_ == 2;
-    $_[0]->{ $_[1] } = $_[2];
+    $_[0]->{base}->set( $_[1] => $_[2] ) if defined $_[0]->{base};
+    $_[0]->{has}{ $_[1] } = $_[2];
 }
 
 sub set_time_zone
 {
     die "set() requires a time_zone value" unless $#_ == 1;
-    $_[0]->{time_zone} = $_[1];
+    $_[0]->{base}->set_time_zone( $_[1] ) if defined $_[0]->{base};
+    $_[0]->{has}{time_zone} = $_[1];
 }
 
-sub clone { bless { %{ $_[0] } }, ref $_[0] }
+sub clone 
+{ 
+    my $base;
+    $base = $_[0]->{base}->clone if defined $_[0]->{base};
+    bless { 
+        has => { %{ $_[0]->{has} } }, 
+        base => $base,
+    }, 
+    ref $_[0]; 
+}
 
 sub is_finite { 1 }
 sub is_infinite { 0 }
 
-sub year       { $_[0]->{year} }
-sub month      { $_[0]->{month} }
-sub day        { $_[0]->{day} }
-sub hour       { $_[0]->{hour} }
-sub minute     { $_[0]->{minute} }
-sub second     { $_[0]->{second} }
-sub nanosecond { $_[0]->{nanosecond} }
-sub time_zone  { $_[0]->{time_zone} }
+sub year       { $_[0]->{has}{year} }
+sub month      { $_[0]->{has}{month} }
+sub day        { $_[0]->{has}{day} }
+sub hour       { $_[0]->{has}{hour} }
+sub minute     { $_[0]->{has}{minute} }
+sub second     { $_[0]->{has}{second} }
+sub nanosecond { $_[0]->{has}{nanosecond} }
+sub time_zone  { $_[0]->{has}{time_zone} }
 
 
 # Internal stringification methods.
@@ -122,7 +160,7 @@ sub iso8601 { join 'T', $_[0]->ymd('-'), $_[0]->hms(':') }
 
 sub is_undef 
 {
-    for ( values %{$_[0]} )
+    for ( values %{$_[0]->{has}} )
     {
         return 0 if defined $_;
     }
@@ -134,12 +172,14 @@ sub to_datetime
 {
     my $self = shift;
     my %param = @_;
+    return $self->{base}->clone if defined $self->{base} &&
+                                  ! exists $param{base};
     die "no base datetime" unless exists $param{base} && 
                                   UNIVERSAL::can( $param{base}, 'utc_rd_values' );
 
     my $result = $param{base}->clone;
     my ($key, $value);
-    while (($key, $value) = each %$self ) {
+    while (($key, $value) = each %{$self->{has}} ) {
         next unless defined $value;
         if ( $key eq 'time_zone' )
         {
@@ -160,7 +200,7 @@ sub contains
                              UNIVERSAL::can( $dt, 'utc_rd_values' );
 
     my ($key, $value);
-    while (($key, $value) = each %$self ) {
+    while (($key, $value) = each %{$self->{has}} ) {
         next unless defined $value;
         if ( $key eq 'time_zone' )
         {
@@ -170,6 +210,12 @@ sub contains
         return 0 unless $dt->$key == $value;
     }
     return 1;
+}
+
+
+sub next
+{
+
 }
 
 
@@ -186,14 +232,14 @@ sub to_recurrence
     for ( qw( second minute hour day month year ) )
     {
         my $by = $_ . 's';  # months, hours
-        if ( exists $self->{$_} && defined $self->{$_} )
+        if ( exists $self->{has}{$_} && defined $self->{has}{$_} )
         {
             if ( $_ eq 'year' ) 
             {
-                $year = $self->{$_};
+                $year = $self->$_;
                 next;
             }
-            $param{$by} = [ $self->{$_} ];
+            $param{$by} = [ $self->$_ ];
             next;
         }
         $freq = $_ unless $freq;
@@ -207,7 +253,7 @@ sub to_recurrence
     if ( $freq eq '' )
     {
         # it is a single date
-        my $dt = DateTime->new( %$self );
+        my $dt = DateTime->new( %{$self->{has}} );
         return DateTime::Set->from_datetimes( dates => [ $dt ] );
     }
 
@@ -246,7 +292,7 @@ DateTime::Incomplete - The partial date & time thing
 =head1 DESCRIPTION
 
 DateTime::Incomplete is a class for representing partial
-date and times.
+dates and times.
 
 Such values are generated by expressions like '10:30',
 '2003', and 'dec-14'.
@@ -266,9 +312,13 @@ Creates a new incomplete date:
 This class method accepts parameters for each date and
 time component: "year", "month", "day", "hour",
 "minute", "second", "nanosecond".  Additionally, it
-accepts a "time_zone" parameter.
+accepts a "time_zone" parameter and a "base" parameter.
 
-Note: There is no "language" parameter.
+The "base" parameter is used as a default base datetime 
+in the "to_datetime" method. It is also used for validating
+inputs to the "set" method.
+
+Note: There is no "language" or "locale" parameter.
 
 C<new> without parameters creates a completely undefined datetime:
 
@@ -295,6 +345,14 @@ passed as the "name" parameter to C<< DateTime::TimeZone->new() >>.
 Incomplete dates don't know the "local time" concept:
 If the new time zone's offset is different from the old time zone,
 no local time adjust is made.
+
+=item * set_base
+
+  $dti->set_base( $dt );
+
+The "base" parameter is used as a default base datetime 
+in the "to_datetime" method. It is also used for validating
+inputs to the "set" method.
 
 
 =item * clone
@@ -337,6 +395,9 @@ Returns true if the datetime is completely undefined.
 =item * to_datetime
 
   $dt = $dti->to_datetime( base => DateTime->now );
+
+  $dti->set_base( DateTime->now );
+  $dt = $dti->to_datetime;
 
 Returns a "complete" datetime.
 
