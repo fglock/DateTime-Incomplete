@@ -1,5 +1,7 @@
 Changes file for DateTime::Incomplete
 
+- documented the error handling: mutators die / accesors return undef
+- from_day_of_year does not define "time" by default
 - DateTime methods:
  epoch hires_epoch is_dst utc_rd_values utc_rd_as_seconds local_rd_as_seconds 
 - "Storable" hooks

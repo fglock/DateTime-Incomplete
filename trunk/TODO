@@ -1,12 +1,11 @@
 TODO file for DateTime::Incomplete
 
+- some accessors could work _without_ a "base".
 - epoch() could be valid for "absolute" incomplete datetimes like:
    2003
    2003-06
    2000-06-15
    2000-06-15T10
-
-- Note: mutator methods die on error; accessors return a value or undef.
 
 - test Storable hooks
 
@@ -53,8 +52,6 @@ returns a list of names of "defined" fields
 * set_week
 
 $dti->set( week => 10 )
-
-* from_datetime / today / now
 
 * is_incomplete/is_complete
 
