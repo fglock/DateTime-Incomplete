@@ -558,13 +558,19 @@ sub contains
     die "no datetime" unless defined $dt && 
                              UNIVERSAL::can( $dt, 'utc_rd_values' );
 
+    if ( $self->has_time_zone ) 
+    {
+        $dt = $dt->clone;
+        $dt->set_time_zone( $self->time_zone );
+    }
+
     my ($key, $value);
     while (($key, $value) = each %{$self->{has}} ) {
         next unless defined $value;
         if ( $key eq 'time_zone' ||
              $key eq 'locale' )
         {
-            # TODO! - time_zone and locale are ignored.
+            # time_zone and locale are ignored.
             next;
         }        
         return 0 unless $dt->$key == $value;
@@ -1060,10 +1066,6 @@ The following datetime would generate the set of I<all seconds> in 2003:
 
 Returns a true value if the incomplete datetime range 
 I<contains> a given datetime value.
-
-Note: the incomplete-datetime time-zone value is ignored,
-that is, the value of "local time" is compared.
-This may lead to unexpected results if the time zone field is set.
 
 For example:
 

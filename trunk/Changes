@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+- "contains" takes the time_zone into account
 - fixed "strftime" of incomplete datetimes
 
 0.00_07  2003-07-25
