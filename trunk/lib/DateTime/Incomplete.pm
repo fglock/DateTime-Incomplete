@@ -250,6 +250,10 @@ sub set
 {
     # parameter checking is done in "base" class.
     die "set() requires a field name and a value" unless $#_ == 2;
+
+    return $_[0]->set_time_zone if $_[1] eq 'time_zone';
+    return $_[0]->set_locale    if $_[1] eq 'locale';
+
     $_[0]->{base}->set( $_[1] => $_[2] ) 
         if defined $_[2] && defined $_[0]->{base};
     $_[0]->{has}{ $_[1] } = $_[2];
@@ -268,15 +272,25 @@ sub has
 sub set_time_zone
 {
     die "set_time_zone() requires a time_zone value" unless $#_ == 1;
-    $_[0]->{base}->set_time_zone( $_[1] ) if defined $_[0]->{base};
-    $_[0]->{has}{time_zone} = $_[1];
+    my $time_zone = $_[1];
+    if ( defined $time_zone )
+    {
+        # $time_zone = DateTime::TimeZone->load( $time_zone ) unless ref $time_zone;
+        $_[0]->{base}->set_time_zone( $time_zone ) if defined $_[0]->{base};
+    }
+    $_[0]->{has}{time_zone} = $time_zone;
 }
 
 sub set_locale
 {
     die "set_locale() requires a locale value" unless $#_ == 1;
-    $_[0]->{base}->set_locale( $_[1] ) if defined $_[0]->{base};
-    $_[0]->{has}{locale} = $_[1];
+    my $locale = $_[1];
+    if ( defined $locale )
+    {
+        $locale = DateTime::Locale->load( $locale ) unless ref $locale;
+        $_[0]->{base}->set_locale( $locale ) if defined $_[0]->{base};
+    }
+    $_[0]->{has}{locale} = $locale;
 }
 
 sub clone 
@@ -365,7 +379,9 @@ my %formats =
       'A' => sub { $_[0]->day_name },
       'b' => sub { $_[0]->month_abbr },
       'B' => sub { $_[0]->month_name },
-      'c' => sub { $_[0]->strftime( $_[0]->{locale}->default_datetime_format ) },
+      'c' => sub { $_[0]->locale ?
+                   $_[0]->strftime( $_[0]->locale->default_datetime_format ) :
+                   $_[0]->datetime }, # <--- change
       'C' => sub { int( $_[0]->year / 100 ) },
       'd' => sub { sprintf( '%02d', $_[0]->day_of_month ) },
       'D' => sub { $_[0]->strftime( '%m/%d/%y' ) },
@@ -373,21 +389,21 @@ my %formats =
       'F' => sub { $_[0]->ymd('-') },
       'g' => sub { substr( $_[0]->week_year, -2 ) },
       'G' => sub { $_[0]->week_year },
-      'H' => sub { sprintf( '%02d', $_[0]->hour ) },
+      'H' => sub { $_[0]->_hour },    # <--- change
       'I' => sub { sprintf( '%02d', $_[0]->hour_12 ) },
       'j' => sub { $_[0]->day_of_year },
-      'k' => sub { sprintf( '%2d', $_[0]->hour ) },
+      'k' => sub { $_[0]->_hour },    # <--- change
       'l' => sub { sprintf( '%2d', $_[0]->hour_12 ) },
-      'm' => sub { sprintf( '%02d', $_[0]->month ) },
-      'M' => sub { sprintf( '%02d', $_[0]->minute ) },
+      'm' => sub { $_[0]->_month },   # <--- change
+      'M' => sub { $_[0]->_minute },  # <--- change
       'n' => sub { "\n" }, # should this be OS-sensitive?
       'N' => sub { (shift)->_format_nanosecs( @_ ) },     # <--- change
       'p' => sub { $_[0]->_am_pm( $_[0] ) },              # <--- change
       'P' => sub { lc $_[0]->_am_pm( $_[0] ) },           # <--- change
       'r' => sub { $_[0]->strftime( '%I:%M:%S %p' ) },
       'R' => sub { $_[0]->strftime( '%H:%M' ) },
-      's' => sub { $_[0]->epoch },
-      'S' => sub { sprintf( '%02d', $_[0]->second ) },
+      's' => sub { $_[0]->_epoch },   # <--- change
+      'S' => sub { $_[0]->_second },  # <--- change
       't' => sub { "\t" },
       'T' => sub { $_[0]->strftime( '%H:%M:%S' ) },
       'u' => sub { $_[0]->day_of_week },
@@ -404,16 +420,28 @@ my %formats =
                    my $doy = $_[0]->day_of_year - 1;
                    return int( ( $doy - $dow + 13 ) / 7 - 1 )
                  },
-      'x' => sub { $_[0]->strftime( $_[0]->{locale}->default_date_format ) },
-      'X' => sub { $_[0]->strftime( $_[0]->{locale}->default_time_format ) },
+      'x' => sub { $_[0]->locale ? 
+                   $_[0]->strftime( $_[0]->locale->default_date_format ) :
+                   $_[0]->date }, # <--- change
+      'X' => sub { $_[0]->locale ?
+                   $_[0]->strftime( $_[0]->locale->default_time_format ) :
+                   $_[0]->time }, # <--- change
       'y' => sub { sprintf( '%02d', substr( $_[0]->year, -2 ) ) },
-      'Y' => sub { return $_[0]->year },
+      'Y' => sub { $_[0]->_year },    # <--- change
       'z' => sub { DateTime::TimeZone::offset_as_string( $_[0]->offset ) },
-      'Z' => sub { $_[0]->{tz}->short_name_for_datetime( $_[0] ) },
+      'Z' => sub { $_[0]->time_zone_short_name },      # <--- change
       '%' => sub { '%' },
     );
 
 $formats{h} = $formats{b};
+
+sub epoch {
+    die "not implemented";
+}
+
+sub _epoch {
+    return $UNDEF_CHAR x 6
+}
 
 sub _am_pm { 
   defined $_[0]->locale ?
