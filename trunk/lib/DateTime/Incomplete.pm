@@ -148,7 +148,7 @@ sub _from_datetime
 }
 
 sub last_day_of_month {
-    $_[0]->_from_datetime( DateTime->last_day_of_month(@_) );
+    return (shift)->_from_datetime( DateTime->last_day_of_month(@_) );
 }
 sub from_epoch {
     return (shift)->_from_datetime( DateTime->from_epoch( @_ ) );
