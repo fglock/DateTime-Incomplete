@@ -1,11 +1,11 @@
 package DateTime::Incomplete;
 
 use strict;
-use Params::Validate qw( validate SCALAR BOOLEAN HASHREF OBJECT );
-
-use vars qw( $VERSION );
 
 use DateTime::Event::Recurrence;
+use Params::Validate qw( validate );
+
+use vars qw( $VERSION );
 
 my $UNDEF_CHAR;
 my ( @FIELDS, %FIELD_LENGTH );
