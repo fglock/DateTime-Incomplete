@@ -43,6 +43,21 @@ BEGIN
     }
 
     # Generate DateTime read-only functions
+
+    for my $meth ( qw/
+        epoch
+        hires_epoch
+        is_dst
+        utc_rd_values
+        utc_rd_as_seconds
+        local_rd_as_seconds
+        / )
+    {
+        no strict 'refs';
+        # to_datetime() dies if there is no "base"
+        *{$meth} = sub { (shift)->to_datetime( @_ )->$meth() };
+    }
+
     for my $meth ( qw/
         week week_year week_number week_of_month
         day_name day_abbr 
@@ -125,6 +140,8 @@ sub _datetime_method
     return $date->$method;
 }
 
+# DATETIME-LIKE METHODS
+
 sub fractional_second {
     $_[0]->_datetime_method( 'fractional_second', 'second', 'nanosecond' );
 }
@@ -175,8 +192,6 @@ sub today
     return $class->new( %param );
 }
 
-# DATETIME-LIKE METHODS
-
 sub new 
 {
     # parameter checking is done in "set" method.
@@ -190,6 +205,7 @@ sub new
     }, $class;
     $self->set_base( $base );
     $self->set_locale( $self->{has}{locale} ) if $self->{has}{locale};
+    $self->set_time_zone( $self->{has}{time_zone} ) if $self->{has}{time_zone};
     return $self;
 }
 
@@ -438,12 +454,11 @@ my %formats =
 
 $formats{h} = $formats{b};
 
-sub epoch {
-    die "not implemented";
-}
-
 sub _epoch {
-    return $UNDEF_CHAR x 6
+    my $epoch;
+    eval { $epoch = $_[0]->epoch };
+    return $UNDEF_CHAR x 6 unless defined $epoch;
+    return $epoch;
 }
 
 sub _am_pm { 
@@ -766,57 +781,40 @@ sub to_recurrence
 
 sub STORABLE_freeze
 {
-    my $self = shift;
-    my $cloning = shift;
+    my ( $self, $cloning ) = @_;
+    return if $cloning;
 
-    my $data = '';
+    my @data;
     for my $key ( keys %FIELD_LENGTH )
     {
         next unless defined $self->{has}{$key};
 
         if ( $key eq 'locale' ) 
         { 
-            $data .= "locale:" . $self->{has}{locale}->id; 
+            push @data,  "locale:" . $self->{has}{locale}->id; 
         }
         elsif ( $key eq 'time_zone' ) 
         { 
-            $data .= "|tz:" . $self->{has}{time_zone}->name; 
+            push @data, "tz:" . $self->{has}{time_zone}->name; 
         }
         else 
         { 
-            $data .= "$key:$self->{has}{$key}|"; 
+            push @data, "$key:" . $self->{has}{$key}; 
         }
     }
-
-    $data .= "|base:".$self->base->STORABLE_freeze if $self->has_base;
-
-    return $data;
+    return join( '|', @data ), [$self->base];
 }
 
 sub STORABLE_thaw
 {
-    my $self = shift;
-    my $cloning = shift;
-    my $data = shift;
-
-    my $base;
-    ( $data, $base ) = split /\|base:/, $data;
-
-    if ( defined $base ) 
-    {
-        $base = DateTime::STORABLE_thaw( $base );
-    }
-
+    my ( $self, $cloning, $data, $base ) = @_;
     my %data = map { split /:/ } split /\|/, $data;
-
-    my $tz = DateTime::TimeZone->new( name => delete $data{tz} );
     my $locale = delete $data{locale};
-
-    %{$self->{has}} = %data;
-    $self->{has}{tz} = $tz;
-    $self->{has}{locale} = DateTime::Locale->load($locale);
-    $self->{base} = $base;
-
+    my $tz =     delete $data{tz};
+    $self->{has} = \%data;
+    $self->set_time_zone( $tz );
+    $self->set( locale => $locale );
+    $self->{base} = $base->[0];
     return $self;
 }
 
@@ -905,6 +903,9 @@ If the new time zone's offset is different from the
 previous time zone,
 no local time adjust is made.
 
+You can remove time zone information using:
+
+  $dti->set_time_zone( undef );
 
 =item * year, month, day, hour, minute, second, nanosecond
 
@@ -947,7 +948,8 @@ for a list of all possible format specifiers.
 
 Undefined fields are replaced by 'xx' or 'xxxx'.
 
-The specification C<%s> (epoch) always returns C<xxxxxx>.
+The specification C<%s> (epoch) returns C<xxxxxx>,
+unless the object has a default C<base>.
 
 =item * week week_year week_number week_of_month day_name day_abbr day_of_week wday dow day_of_year doy quarter day_of_quarter doq weekday_of_month jd mjd is_leap_year ce_year era year_with_era last_day_of_month month_name month_abbr hour_1 hour_12 hour_12_0 fractional_second millisecond microsecond offset time_zone_short_name time_zone_long_name
 
@@ -964,7 +966,7 @@ These methods allow you to distinguish normal datetime objects from
 infinite ones.  Infinite datetime objects are documented in
 L<DateTime::Infinite|DateTime::Infinite>.
 
-Incomplete dates are not "Infinite".
+Incomplete dates are always "finite".
 
 
 =item * truncate( to => ... )
@@ -1029,6 +1031,13 @@ It creates a C<DateTime::Incomplete> object with all fields defined.
 This class method is equivalent to C<now>, but it leaves
 hour, minute, second and nanosecond undefined.
 
+=item * epoch hires_epoch is_dst utc_rd_values utc_rd_as_seconds local_rd_as_seconds
+
+    my $epoch = $dti->epoch( base => $dt );
+
+This methods are equivalent to the C<DateTime> methods with the same name.
+
+These methods will C<die> if no base datetime is defined.
 
 =back
 
@@ -1161,13 +1170,6 @@ value of a given day is 23:59:59.999999999 (for non leapsecond days).
 
 These methods are not implemented in C<DateTime::Incomplete>.
 Some may be implemented in next versions:
-
-  epoch
-  hires_epoch
-  is_dst
-  utc_rd_values
-  utc_rd_as_seconds
-  local_rd_as_seconds
 
   add_duration, add, subtract_duration, subtract, subtract_datetime
 

@@ -1,7 +1,8 @@
 TODO file for DateTime::Incomplete
 
+- inconsistent behaviour on error: some methods die, some return undef.
+
 - test Storable hooks
-- make Storable hooks accept data from other classes
 
 - more tests for next/previous/closest with year and nanosecond
 - use $FIELDS[0] instead of 'year'; $FIELDS[-2] instead of nanosecond

@@ -1,8 +1,10 @@
 Changes file for DateTime::Incomplete
 
-- added Storable hooks
+- DateTime methods:
+ epoch hires_epoch is_dst utc_rd_values utc_rd_as_seconds local_rd_as_seconds 
+- "Storable" hooks
 - "contains" takes the time_zone into account
-- fixed "strftime" of incomplete datetimes
+- fixed "strftime" of incomplete datetimes, epoch
 
 0.00_07  2003-07-25
 - set_time_zone / set_locale test for undef args
