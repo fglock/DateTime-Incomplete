@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+0.00_07  2003-07-25
 - set_time_zone / set_locale test for undef args
 - strftime
 - time_zone_long_name

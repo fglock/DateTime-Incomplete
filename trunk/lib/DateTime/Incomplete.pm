@@ -12,7 +12,7 @@ my ( @FIELDS, %FIELD_LENGTH );
 
 BEGIN
 {
-    $VERSION = '0.00_06';
+    $VERSION = '0.00_07';
 
     $UNDEF_CHAR = 'x';
 
@@ -361,7 +361,7 @@ my %formats =
       'A' => sub { $_[0]->day_name },
       'b' => sub { $_[0]->month_abbr },
       'B' => sub { $_[0]->month_name },
-      'c' => sub { $_[0]->locale ?
+      'c' => sub { $_[0]->has_locale ?
                    $_[0]->strftime( $_[0]->locale->default_datetime_format ) :
                    $_[0]->datetime }, # <--- change
       'C' => sub { int( $_[0]->year / 100 ) },
@@ -402,7 +402,7 @@ my %formats =
                    my $doy = $_[0]->day_of_year - 1;
                    return int( ( $doy - $dow + 13 ) / 7 - 1 )
                  },
-      'x' => sub { $_[0]->locale ? 
+      'x' => sub { $_[0]->has_locale ? 
                    $_[0]->strftime( $_[0]->locale->default_date_format ) :
                    $_[0]->date }, # <--- change
       'X' => sub { $_[0]->locale ?
@@ -857,6 +857,7 @@ for a list of all possible format specifiers.
 
 Undefined fields are replaced by 'xx' or 'xxxx'.
 
+The specification C<%s> (epoch) always returns C<xxxxxx>.
 
 =item * week week_year week_number week_of_month day_name day_abbr day_of_week wday dow day_of_year doy quarter day_of_quarter doq weekday_of_month jd mjd is_leap_year ce_year era year_with_era last_day_of_month month_name month_abbr hour_1 hour_12 hour_12_0 fractional_second millisecond microsecond offset time_zone_short_name time_zone_long_name
 
