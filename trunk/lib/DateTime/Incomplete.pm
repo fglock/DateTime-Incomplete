@@ -52,7 +52,6 @@ BEGIN
         is_dst
         utc_rd_values
         utc_rd_as_seconds
-        local_rd_as_seconds
         / )
     {
         no strict 'refs';
@@ -879,6 +878,11 @@ object.  This object is used as a default datetime in the
 C<to_datetime()> method, and it also used to validate inputs to the
 C<set()>.
 
+The base object must use the year/month/day system.  Most calendars
+use this system: Gregorian (C<DateTime>), Julian, and others.  Note
+that this module has not been well tested with base objects outside of
+the C<DateTime.pm> class.
+
 By default, newly created C<DateTime::Incomplete> objects have no
 base.
 
@@ -1027,12 +1031,12 @@ as necessary.
 
 =item * utc_rd_as_seconds
 
-=item * local_rd_as_seconds
-
     my $epoch = $dti->epoch( base => $dt );
 
 These methods are equivalent to the C<DateTime> methods with the same
 name, but they will return C<undef> if no base datetime is defined.
+They all accept a "base" argument to use in order to calculate the
+method's return values.
 
 =item * is_finite, is_infinite
 
@@ -1107,7 +1111,7 @@ Use this to set or undefine a datetime field:
   $dti->set( day => 24 );
   $dti->set( day => undef );
 
-This method the same arguments as the C<set()> method in
+This method takes the same arguments as the C<set()> method in
 C<DateTime.pm>.
 
 =item * set_time_zone
@@ -1143,11 +1147,12 @@ to this class.
 
 =item * base
 
-Returns the C<base> datetime value, or C<undef>.
+Returns the base datetime value, or C<undef> if the object has none.
 
 =item * has_base
 
-Returns 1 if the C<base> value is defined; otherwise it returns 0.
+Returns a boolean value indicating whether or not the object has a
+base datetime set.
 
 =item * is_undef
 
@@ -1155,11 +1160,7 @@ Returns true if the datetime is completely undefined.
 
 =item * set_base
 
-Sets the base C<DateTime.pm> object for the C<DateTime::Incomplete>
-object.
-
-The base object must use the year/month/day system.  Most calendars
-use this system: Gregorian (C<DateTime>), Julian, and others.
+Sets the base datetime object for the C<DateTime::Incomplete> object.
 
 The default value for "base" is C<undef>, which means no validation is
 made on input.
