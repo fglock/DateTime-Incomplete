@@ -94,7 +94,7 @@ sub _datetime_method
     $param{locale} = $self->locale if $self->has_locale;
     $param{time_zone} = $self->time_zone if $self->has_time_zone;
     $param{$_} = $self->$_ for @fields;
-    $date = $self->base_class->new( %param );
+    $date = DateTime->new( %param );
     
     return $date->$method;
 }
@@ -217,12 +217,6 @@ sub base
 sub has_base
 {
     return defined $_[0]->{base} ? 1 : 0;
-}
-
-sub base_class
-{
-    return 'DateTime' unless ref $_[0]->{base};
-    return ref $_[0]->{base};
 }
 
 sub set
@@ -965,11 +959,6 @@ Julian, and others.
 =item * base
 
 Returns the C<base> datetime value, or C<undef>.
-
-
-=item * base_class
-
-Returns the package name of the C<base> datetime value, or "DateTime".
 
 
 =item * has_base
