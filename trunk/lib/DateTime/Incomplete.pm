@@ -185,6 +185,7 @@ sub new
         has => \%param,
     }, $class;
     $self->set_base( $base );
+    $self->set_locale( $self->{has}{locale} ) if $self->{has}{locale};
     return $self;
 }
 
