@@ -1,8 +1,16 @@
 TODO file for DateTime::Incomplete
 
-- inconsistent behaviour on error: some methods die, some return undef.
+- epoch() could be valid for "absolute" incomplete datetimes like:
+   2003
+   2003-06
+   2000-06-15
+   2000-06-15T10
+
+- Note: mutator methods die on error; accessors return a value or undef.
 
 - test Storable hooks
+
+    perl -Ilib -MStorable -MDateTime::Incomplete -MData::Dumper -e '$dt=DateTime->new(year=>1970);$dti=DateTime::Incomplete->new( year => 2003, base=>$dt, time_zone => "America/Chicago" );$freeze = Storable::nfreeze( $dti );print "$freeze\n"; '
 
 - more tests for next/previous/closest with year and nanosecond
 - use $FIELDS[0] instead of 'year'; $FIELDS[-2] instead of nanosecond

@@ -54,8 +54,12 @@ BEGIN
         / )
     {
         no strict 'refs';
-        # to_datetime() dies if there is no "base"
-        *{$meth} = sub { (shift)->to_datetime( @_ )->$meth() };
+        *{$meth} = sub 
+                   { 
+                       # to_datetime() dies if there is no "base"
+                       # we get 'undef' if this happens
+                       eval { (shift)->to_datetime( @_ )->$meth() };
+                   };
     }
 
     for my $meth ( qw/
@@ -456,7 +460,7 @@ $formats{h} = $formats{b};
 
 sub _epoch {
     my $epoch;
-    eval { $epoch = $_[0]->epoch };
+    $epoch = $_[0]->epoch;
     return $UNDEF_CHAR x 6 unless defined $epoch;
     return $epoch;
 }
@@ -1037,7 +1041,7 @@ hour, minute, second and nanosecond undefined.
 
 This methods are equivalent to the C<DateTime> methods with the same name.
 
-These methods will C<die> if no base datetime is defined.
+These methods will return C<undef> if no base datetime is defined.
 
 =back
 
