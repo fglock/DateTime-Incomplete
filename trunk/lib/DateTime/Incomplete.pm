@@ -280,35 +280,49 @@ sub next
 
     my $result = $base->clone;
 
-    # warn "next: self ".$self->datetime." base ".$result->datetime;
-
-    my @fields = @FIELDS;
-    my ( $field, $overflow, $bigger_field );
-    while ( @fields ) 
+    REDO: for (1..10) 
     {
-        ( $field, undef ) = ( shift @fields, shift @fields );
-        if ( defined $self->$field )
-        {
-            $overflow = ( $self->$field < $result->$field );
-            return undef if $overflow && $field eq 'year';
+        # warn "next: self ".$self->datetime." base ".$result->datetime;
 
-            if ( $self->$field != $result->$field )
+        my @fields = @FIELDS;
+        my ( $field, $overflow, $bigger_field );
+        while ( @fields ) 
+        {
+            ( $field, undef ) = ( shift @fields, shift @fields );
+            if ( defined $self->$field )
             {
-                if ( $overflow ) 
+                $overflow = ( $self->$field < $result->$field );
+                return undef if $overflow && $field eq $FIELDS[0];
+
+                if ( $self->$field != $result->$field )
                 {
-                    $result->set( $field => $self->$field );
-                    $result->add( $bigger_field . 's' => 1 );
-                    return $self->next( $result );
-                }
-                else
-                {
-                    $result->set( $field => $self->$field, @fields );
+                    eval { $result->set( $field => $self->$field ) };
+                    if ( $@ ) 
+                    {
+                        $result->set( @fields );
+                        eval { $result->set( $field => $self->$field ) };
+                        if ( $@ )
+                        {
+                            $overflow = 1;
+                        }
+                    }
+
+                    if ( $overflow ) 
+                    {
+                        $result->add( $bigger_field . 's' => 1 );
+                        next REDO; 
+                    }
+                    else
+                    {
+                        $result->set( @fields );
+                    }
                 }
             }
+            $bigger_field = $field;
         }
-        $bigger_field = $field;
+        return $result;
     }
-    return $result;
+    return undef;
 }
 
 sub previous

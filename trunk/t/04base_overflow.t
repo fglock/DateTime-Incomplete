@@ -84,7 +84,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     }
 
     TODO: {
-        local $TODO = "day 30 is invalid in february";
+        # local $TODO = "day 30 is invalid in february";
         my $dt_19700220 = $base->clone;
         $dt_19700220->set( month => 2, day => 20 );
         eval { $dt1 = $dti->next( $dt_19700220 ) };
@@ -93,7 +93,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     }
 
     TODO: {
-        local $TODO = "invalid DT::I should return undef";
+        # local $TODO = "invalid DT::I should return undef";
 
         $dti = DateTime::Incomplete->new(
             month => 2, day =>  30,
