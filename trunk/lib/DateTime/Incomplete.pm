@@ -5,23 +5,15 @@ use Params::Validate qw( validate SCALAR BOOLEAN HASHREF OBJECT );
 
 use vars qw( $VERSION );
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
-use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
 use vars qw( @FIELDS %FIELD_LENGTH );
+
+use DateTime::Event::Recurrence;
 
 BEGIN
 {
     $VERSION = '0.00_06';
 
     $UNDEF_CHAR = 'x';
-
-    # to_recurrence() method requires a recurrence module.
-    # otherwise, it is not required.
-    $RECURRENCE_MODULE = 'DateTime::Event::Recurrence';
-    $CAN_RECURRENCE = 0;
-    eval "
-        use $RECURRENCE_MODULE;
-        \$CAN_RECURRENCE = 1;
-    ";
 
     @FIELDS = ( year => 0, month => 1, day => 1, 
                 hour => 0, minute => 0, second => 0, nanosecond => 0 );
@@ -694,9 +686,6 @@ sub closest
 
 sub to_recurrence
 {
-    die "to_recurrence() is not available because ".
-        $RECURRENCE_MODULE . " is not installed" unless $CAN_RECURRENCE;
-
     my $self = shift;
     my %param;
 
@@ -732,7 +721,7 @@ sub to_recurrence
 
     # for ( keys %param ) { print STDERR " param $_ = @{$param{$_}} \n"; }
 
-    my $r = yearly $RECURRENCE_MODULE ( %param );
+    my $r = DateTime::Event::Recurrence->yearly( %param );
     if ( defined $year ) {
         my $span = DateTime::Span->from_datetimes( 
                        start => DateTime->new( year => $year ),
@@ -1037,9 +1026,6 @@ Those recurrences are DateTime::Set objects:
 
 Recurrence generation has only been tested with
 Gregorian dates so far.
-
-This method will die if the
-C<DateTime::Event::Recurrence> package is not installed.
 
 Incomplete dates that have the I<year> defined will
 generate finite sets. This kind of sets can take a lot of 

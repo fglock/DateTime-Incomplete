@@ -139,11 +139,6 @@ $UNDEF2 = $UNDEF_CHAR x 2;
 
   # Tests to_recurrence()
 
-  SKIP: 
-  {
-    skip $DateTime::Incomplete::RECURRENCE_MODULE . " is not installed", 16
-         unless $DateTime::Incomplete::CAN_RECURRENCE;
-
     my $set;
 
     # a complete definition yields a DT::Set with one element
@@ -223,7 +218,6 @@ $UNDEF2 = $UNDEF_CHAR x 2;
       $dt->subtract( months => 10 );
       is( $dti_no_day->closest( $dt )->datetime , '2002-12-24T00:59:00',
           'closest xmas '.$dt->datetime.'' );
-    }
 
   # End: Tests to_recurrence()
 
