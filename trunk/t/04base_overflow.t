@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 8;
+use Test::More tests => 9;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -30,14 +30,14 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     $dt1 = $dti->next( $dt_19700131 );
 
     is( $dt1->datetime , '1970-02-01T00:00:00', 
-        'first date in february is ok' );
+        'next - first date in february is ok' );
 
     TODO: {
         local $TODO = "needs to change invalid day in order to fit in month";
         $dt1->set( month => 3, day => 31 );
         eval { $dt1 = $dti->previous( $dt1 ) };
         ok( $dt1 && ( $dt1->datetime eq '1970-02-28T59:59:59' ),
-            'last day in february' );
+            'previous - last day in february' );
     }
 }
 
@@ -63,24 +63,24 @@ $UNDEF2 = $UNDEF_CHAR x 2;
 
     { $dt1 = $dti->next( $dt_19700131 ) };
     is( $dt1->datetime , '1970-03-30T00:00:00',
-        'next skips invalid date (01-31)' );
+        'next - skips invalid date (01-31)' );
 
     { $dt1 = $dti->next( $dt_19700129 ) };
     is( $dt1->datetime , '1970-01-30T00:00:00',
-        'next skips invalid date (01-29)' );
+        'next - skips invalid date (01-29)' );
 
     { $dt1 = $dti->next( $dt_19700128 ) };
     is( $dt1->datetime , '1970-01-30T00:00:00',
-        'next skips invalid date (01-28)' );
+        'next - skips invalid date (01-28)' );
 
     SKIP: {
-       skip "Would enter infinite recursion", 1
+       skip "previous - Would enter infinite recursion", 1
            if 1;
 
        $dt1->set( month => 3, day => 10 );
        $dt1 = $dti->previous( $dt1 );
        is( $dt1->datetime , '1970-01-30T23:59:59',
-            'previous skips invalid date' );
+            'previous - skips invalid date' );
     }
 
     TODO: {
@@ -89,7 +89,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         $dt_19700220->set( month => 2, day => 20 );
         eval { $dt1 = $dti->next( $dt_19700220 ) };
         is( $dt1->datetime , '1970-03-30T00:00:00',
-            'next skips invalid date (02-20)' );
+            'next - skips invalid date (02-20)' );
     }
 
     TODO: {
@@ -100,7 +100,13 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         );
         eval { $dt1 = $dti->next( $base ) };
         ok( ! defined $dt1 , 
-            'invalid incomplete datetime (02-30)' );
+            'next - invalid incomplete datetime (02-30)' );
+        warn "#     ".$dt1->datetime if defined $dt1;
+
+        eval { $dt1 = $dti->previous( $base ) };
+        ok( ! defined $dt1 ,
+            'previous - invalid incomplete datetime (02-30)' );
+        warn "#     ".$dt1->datetime if defined $dt1;
     }
 
 }
