@@ -1,5 +1,8 @@
 Changes file for DateTime::Incomplete
 
+0.02  2004-09-21
+- fixed to_spanset(), bug reported by Joshua Hoblitt.
+
 0.0104  2003-11-10
 - to_spanset
 

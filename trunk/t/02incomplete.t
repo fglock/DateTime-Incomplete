@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 54;
+use Test::More tests => 59;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -321,6 +321,10 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
 
           is( $set->next( $dt )->{set}."" , '[2003-12-24T00:00:00..2003-12-24T01:00:00)',
               'next xmas - span recurrence' );
+
+          is( $dti_no_day->datetime."T". $dti_no_day->hms, 
+              "xxxx-12-24T00:xx:xxT00:xx:xx", 
+              "dti was not modified" );
       }
 
   # End: Tests to_recurrence()
@@ -329,6 +333,26 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
 
 }
 
+{
+    my $dt = DateTime->new( year => 2003 );
+    my $dti = DateTime::Incomplete->new;
+
+    is( $dti->datetime."T". $dti->hms,
+        "xxxx-xx-xxTxx:xx:xxTxx:xx:xx",
+        "dti is not defined" );
+    my $span = $dti->to_span;
+    is( $span->{set}."" , '('.NEG_INFINITY.'..'.INFINITY.')',
+          'infinite span' );
+
+    my $set  = $dti->to_recurrence;
+    is( $set->next( $dt )->datetime , '2003-01-01T00:00:01',
+          'next "after" value' );
+
+    my $spanset = $dti->to_spanset;
+    is( $spanset->{set}."" , '('.NEG_INFINITY.'..'.INFINITY.')',
+          'single infinite span' );
+
+}
 
 1;
 

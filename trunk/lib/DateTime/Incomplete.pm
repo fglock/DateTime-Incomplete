@@ -13,7 +13,7 @@ my ( @FIELDS, %FIELD_LENGTH, @TIME_FIELDS, @FIELDS_SORTED );
 
 BEGIN
 {
-    $VERSION = '0.0104';
+    $VERSION = '0.02';
 
     $UNDEF_CHAR = 'x';
 
@@ -902,15 +902,22 @@ sub to_recurrence
 sub to_spanset
 {
     my $self = shift;
+    my @reset;
     for ( qw( second minute hour day month year ) )
     {
         if ( $self->has( $_ ) )
         {
+            my %fields = @FIELDS;
+            @reset = map { $_ => $fields{$_} } @reset;
+            my $dti = $self->clone;
+            $dti->set( @reset ) if @reset;
+
             return DateTime::SpanSet->from_set_and_duration (
-                set => $self->to_recurrence,
+                set => $dti->to_recurrence,
                 $_ . 's' => 1,
             );
         }
+        push @reset, $_;
     }
     return $self->to_span;
 }
