@@ -1,5 +1,9 @@
 Changes file for DateTime::Incomplete
 
+0.0103  2003-11-06
+- start, end, to_span
+- requires DateTime::Set 0.1401
+
 0.0102  2003-11-06
 - to_datetime() uses "today" as a base date, if none was given.
   The following methods are affected by this change:
@@ -10,7 +14,6 @@ Changes file for DateTime::Incomplete
 - to_datetime() sets fields in a known order,
   instead of hash-order.  Based on a patch by Rick Measham
 - Included has() method, contributed by Rick Measham
-
 
 0.0101  2003-11-03
 - runs in Perl 5.00503.  

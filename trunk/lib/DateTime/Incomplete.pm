@@ -31,7 +31,7 @@ BEGIN
 
     # Generate named accessors
 
-    for my $field ( keys %FIELD_LENGTH )
+    for my $field ( @FIELDS_SORTED )
     {
 	no strict 'refs';
 	*{$field} = sub { $_[0]->_get($field) };
@@ -804,6 +804,54 @@ sub closest
     return $dt2;
 }
 
+sub start
+{
+    my $self = shift;
+    return undef unless $self->has_year;
+    my $dt = $self->to_datetime;
+    $dt->subtract( years => 1 );
+    return $self->next( $dt );
+}
+
+sub end
+{
+    my $self = shift;
+    return undef unless $self->has_year;
+    my $dt = $self->to_datetime;
+    $dt->add( years => 1 );
+    my $end = $self->previous( $dt );
+    $end->add( nanoseconds => 1 ) unless $self->has_nanosecond;
+    return $end;
+}
+
+sub to_span
+{
+    my $self = shift;
+    my $start = $self->start;
+    my $end = $self->end;
+
+    return DateTime::Set->empty_set->complement->span
+        if ! $start && ! $end;
+
+    my @start;
+    @start = ( 'start', $start ) if $start;
+
+    my @end;
+    if ( $end )
+    {
+        if ( $self->has_nanosecond )
+        {
+            @end = ( 'end', $end ); 
+        }
+        else
+        {
+            @end = ( 'before', $end ); 
+        }
+    }
+
+    return DateTime::Span->from_datetimes( @start, @end );
+}
+
 sub to_recurrence
 {
     my $self = shift;
@@ -1325,6 +1373,22 @@ following incomplete datetime would generate the set of I<all seconds>
 in 2003:
 
   2003-xx-xxTxx:xx:xx
+
+=item * start
+
+=item * end
+
+=item * to_span
+
+These methods view an incomplete datetime as a "time span".
+
+For example, the incomplete datetime C<2003-xx-xxTxx:xx:xx> starts
+in C<2003-01-01T00:00:00> and ends in C<2004-01-01T00:00:00>.
+
+The C<to_span> method returns a C<DateTime::Span> object.
+
+An incomplete datetime without an year spans "forever". 
+Start and end datetimes are C<undef>.
 
 =item * contains
 

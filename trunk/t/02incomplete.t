@@ -2,9 +2,12 @@
 
 use strict;
 
-use Test::More tests => 44;
+use Test::More tests => 52;
 use DateTime;
 use DateTime::Incomplete;
+
+use constant INFINITY     =>       100 ** 100 ** 100 ;
+use constant NEG_INFINITY => -1 * (100 ** 100 ** 100);
 
 my $UNDEF_CHAR = 'x';
 my $UNDEF4 = $UNDEF_CHAR x 4;
@@ -151,6 +154,42 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
 
       #is( $dt->to_datetime->datetime, '2003-01-01T00:00:00',
       #    'force to be datetime' );
+
+      {
+        $dt->set( second => 30 );
+        my $dt_start = $dt->start;
+        is( $dt_start->datetime, '2003-01-01T00:00:30', 'start datetime' );
+        my $dt_end = $dt->end;
+        is( $dt_end->strftime( "%Y-%m-%dT%H:%M:%S.%N" ), 
+            '2003-12-01T00:00:31.000000000', 
+            'end datetime' );
+      }
+
+      {
+        $dt->set( second => undef );
+        is( $dt->start->datetime, '2003-01-01T00:00:00', 'start datetime' );
+        is( $dt->end->strftime( "%Y-%m-%dT%H:%M:%S.%N" ), 
+            '2003-12-01T00:01:00.000000000', 
+            'end datetime' );
+        is( "".$dt->to_span->{set}, 
+            '[2003-01-01T00:00:00..2003-12-01T00:01:00)', 
+            'span' );
+
+        $dt->set( nanosecond => 0 );
+        # $dt->set( second => 0 );
+        is( $dt->end->strftime( "%Y-%m-%dT%H:%M:%S.%N" ), 
+            '2003-12-01T00:00:59.000000000', 
+            'end datetime' );
+        is( "".$dt->to_span->{set}, 
+            '[2003-01-01T00:00:00..2003-12-01T00:00:59]', 
+            'span' );
+
+        $dt->set( year => undef );
+        is( "".$dt->to_span->{set}, 
+            '('. NEG_INFINITY . '..' . INFINITY . ')',
+            'span' );
+      }
+
     }
 
     # TESTS TODO:
