@@ -1,6 +1,8 @@
 Changes file for DateTime::Incomplete
 
 0.0101  2003-11-03
+- runs in Perl 5.00503.  
+  Dave Rolsky & Flavio S. Glock, creating a cvs conflict :)
 - there is no set_locale() in DateTime.   
   Modified from a patch by Rick Measham
 - fixed an infinite loop in _format_nanoseconds.   
