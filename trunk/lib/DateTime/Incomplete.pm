@@ -1019,7 +1019,7 @@ defined.
 
 These are equivalent to DateTime stringification methods with the same
 name, except that the undefined fields are replaced by 'xx' or 'xxxx'
-as necessary.
+as appropriate.
 
 =item * epoch
 
@@ -1048,8 +1048,8 @@ This method implements functionality similar to the C<strftime()>
 method in C.  However, if given multiple format strings, then it will
 return multiple scalars, one for each format string.
 
-See the C<strftime Specifiers> section in C<DateTime.pm> documentation
-for a list of all possible format specifiers.
+See the "strftime Specifiers" section in the C<DateTime.pm>
+documentation for a list of all possible format specifiers.
 
 Undefined fields are replaced by 'xx' or 'xxxx' as appropriate.
 
