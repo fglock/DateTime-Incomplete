@@ -1,10 +1,10 @@
 TODO file for DateTime::Incomplete
 
+- fix "contains" to use time_zone info.
+
 - more tests for next/previous/closest with year and nanosecond
 - use $FIELDS[0] instead of 'year'; $FIELDS[-2] instead of nanosecond
 - change @FIELDS to a "class" constant (instead of "package")
-
-- "truncate" tests
 
 - locale and time_zone tests:
   mixing string and object time_zones;

@@ -147,6 +147,38 @@ sub time_zone_short_name {
     $_[0]->_datetime_method( 'time_zone_short_name' );
 }
 
+sub _from_datetime
+{
+    my $class = shift;
+    my $dt = shift;
+    my %param;
+    $param{$_} = $dt->$_ for ( keys %FIELD_LENGTH );
+    return $class->new( %param );
+}
+
+sub from_epoch {
+    return (shift)->_from_datetime( DateTime->from_epoch( @_ ) );
+}
+sub now {
+    return (shift)->_from_datetime( DateTime->now( @_ ) );
+}
+sub from_object {
+    return (shift)->_from_datetime( DateTime->from_object( @_ ) );
+}
+sub from_day_of_year {
+    return (shift)->_from_datetime( DateTime->from_day_of_year( @_ ) );
+}
+
+sub today
+{
+    my $class = shift;
+    my $now = DateTime->now( @_ );
+    my %param;
+    my %fields = ( %FIELD_LENGTH );
+    delete $fields{$_} for ( qw/ hour minute second nanosecond / );
+    $param{$_} = $now->$_ for ( keys %fields );
+    return $class->new( %param );
+}
 
 # DATETIME-LIKE METHODS
 
@@ -636,7 +668,8 @@ This method accepts either a time zone object or a string that can be
 passed as the "name" parameter to C<< DateTime::TimeZone->new() >>.
 
 Incomplete dates don't know the "local time" concept:
-If the new time zone's offset is different from the old time zone,
+If the new time zone's offset is different from the 
+previous time zone,
 no local time adjust is made.
 
 
@@ -696,6 +729,59 @@ specify which values to truncate, and it may be one of "year",
 "month", "day", "hour", "minute", or "second".  For example, if
 "month" is specified, then the day becomes 1, and the hour,
 minute, and second all become 0.
+
+
+=item * from_day_of_year( ... )
+
+This constructor takes the same arguments as can be given to the
+C<new()> method, except that it does not accept a "month" or "day"
+argument.  Instead, it requires both "year" and "day_of_year".  The
+day of year must be between 1 and 366, and 366 is only allowed for
+leap years.
+
+It creates a C<DateTime::Incomplete> object with all fields defined.
+
+
+=item * from_object( object => $object, ... )
+
+This class method can be used to construct a new 
+C<DateTime::Incomplete> object from
+any object that implements the C<utc_rd_values()> method.  All
+C<DateTime::Calendar> modules must implement this method in order to
+provide cross-calendar compatibility.  This method accepts a
+"locale" parameter.
+
+If the object passed to this method has a C<time_zone()> method, that
+is used to set the time zone.  Otherwise UTC is used.
+
+It creates a C<DateTime::Incomplete> object with all fields defined.
+
+
+=item * from_epoch( ... )
+
+This class method can be used to construct a new 
+C<DateTime::Incomplete> object from
+an epoch time instead of components.  Just as with the C<new()>
+method, it accepts "time_zone" and "locale" parameters.
+
+If the epoch value is not an integer, the part after the decimal will
+be converted to nanoseconds.  This is done in order to be compatible
+with C<Time::HiRes>.
+
+It creates a C<DateTime::Incomplete> object with all fields defined.
+
+
+=item * now( ... )
+
+This class method is equivalent to C<DateTime->now>.
+
+It creates a C<DateTime::Incomplete> object with all fields defined.
+
+
+=item * today( ... )
+
+This class method is equivalent to C<now>, but it leaves
+hour, minute, second and nanosecond undefined.
 
 
 =back
@@ -856,16 +942,11 @@ You may want to use C<has_nanosecond> instead.
 
 =head1 DIFFERENCES BETWEEN "DATETIME" AND "DATETIME::INCOMPLETE"
 
-These methods are not implemented in C<DateTime::Incomplete>
-(some may be implemented in next versions):
+These methods are not implemented in C<DateTime::Incomplete>.
+Some may be implemented in next versions:
 
-  from_epoch
   epoch
   hires_epoch
-  now
-  today
-  from_object
-  from_day_of_year
   is_dst
   strftime
   utc_rd_values
@@ -873,8 +954,6 @@ These methods are not implemented in C<DateTime::Incomplete>
   local_rd_as_seconds
 
   add_duration, add, subtract_duration, subtract, subtract_datetime
-
-There are no class methods. The following are not implemented:
 
   DefaultLanguage
   compare

@@ -2,9 +2,14 @@
 
 use strict;
 
-use Test::More tests => 5;
+use Test::More tests => 9;
 use DateTime;
 use DateTime::Incomplete;
+
+use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
+$UNDEF_CHAR = $DateTime::Incomplete::UNDEF_CHAR;
+$UNDEF4 = $UNDEF_CHAR x 4;
+$UNDEF2 = $UNDEF_CHAR x 2;
 
 {
     my $dti;
@@ -39,6 +44,28 @@ use DateTime::Incomplete;
     $dti->set( year => undef );
     ok( ! defined $dti->is_leap_year ,
         'is_leap_year checks for valid parameter' );
+}
+
+{
+    my $dti;
+
+    $dti = DateTime::Incomplete->now;
+    ok( defined $dti ,
+        "now() doesn't die: ".$dti->datetime );
+
+    $dti = DateTime::Incomplete->today;
+    my $str_today = $dti->datetime;
+    ok( defined $dti ,
+        "today() doesn't die: ".$str_today );
+
+    $str_today =~ s/$UNDEF2:$UNDEF2$/00:00/;
+    $dti->truncate( to => 'hour' );
+    is( $dti->datetime , $str_today ,
+        "truncate() defines min:sec ".$str_today );
+
+    $dti = DateTime::Incomplete->from_epoch( epoch => 0 );
+    ok( defined $dti ,
+        "from_epoch() doesn't die: ".$dti->datetime );
 }
 
 1;
