@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+   Implemented is_undef, to_datetime, contains
    All methods in DATETIME-LIKE section are implemented. Most are tested.
 
 0.00_02  2003-07-19

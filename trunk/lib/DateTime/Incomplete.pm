@@ -2,13 +2,27 @@ package DateTime::Incomplete;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.00_02';
 
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
-$UNDEF_CHAR = 'x';
-$UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
-$UNDEF2 = $UNDEF_CHAR x 2;   # xx
+use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
 
+BEGIN
+{
+    $VERSION = '0.00_02';
+
+    $UNDEF_CHAR = 'x';
+    $UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
+    $UNDEF2 = $UNDEF_CHAR x 2;   # xx
+
+    # to_recurrence() method requires a recurrence module.
+    # otherwise, it is not necessary.
+    $RECURRENCE_MODULE = 'DateTime::Event::Recurrence';
+    $CAN_RECURRENCE = 0;
+    eval "
+        use $RECURRENCE_MODULE;
+        \$CAN_RECURRENCE = 1;
+    ";
+}
 
 # DATETIME-LIKE METHODS
 
@@ -144,8 +158,52 @@ sub contains
 
 sub to_recurrence
 {
-    # TODO
-    die "Not implemented";
+    die "to_recurrence() is not available because ".
+        $RECURRENCE_MODULE . " is not installed" unless $CAN_RECURRENCE;
+
+    my $self = shift;
+    my %param;
+
+    my $freq = '';
+    my $year;
+    for ( qw( second minute hour day month year ) )
+    {
+        my $by = $_ . 's';  # months, hours
+        if ( exists $self->{$_} && defined $self->{$_} )
+        {
+            if ( $_ eq 'year' ) 
+            {
+                $year = $self->{$_};
+                next;
+            }
+            $param{$by} = [ $self->{$_} ];
+            next;
+        }
+        $freq = $_ unless $freq;
+        # TODO: use a hash
+        $param{$by} = [ 1 .. 12 ] if $_ eq 'month';
+        $param{$by} = [ 1 .. 31 ] if $_ eq 'day';
+        $param{$by} = [ 0 .. 23 ] if $_ eq 'hour';
+        $param{$by} = [ 0 .. 59 ] if $_ eq 'minute';
+        $param{$by} = [ 0 .. 59 ] if $_ eq 'second';
+    }
+    if ( $freq eq '' )
+    {
+        # it is a single date
+        my $dt = DateTime->new( %$self );
+        return DateTime::Set->from_datetimes( dates => [ $dt ] );
+    }
+
+    # for ( keys %param ) { print STDERR " param $_ = @{$param{$_}} \n"; }
+
+    my $r = yearly $RECURRENCE_MODULE ( %param );
+    if ( defined $year ) {
+        my $span = DateTime::Span->from_datetimes( 
+                       start => DateTime->new( year => $year ),
+                       before => DateTime->new( year => $year + 1 ) );
+        $r = $r->intersection( $span );
+    }
+    return $r;
 }
 
 
@@ -279,16 +337,25 @@ doesn't exist.
   $dti = DateTime::Incomplete->new( month => 12, day => 24 );
   $dtset= $dti->to_recurrence;   # Christmas day recurrence
 
-This method uses some magic to find out a proper recurrence
-frequency, and then calls DateTime::Event::Recurrence to generate
-a recurrence set.
+This method generates the set of all possible datetimes
+that fit into an incomplete datetime definition.
 
-The recurrences are DateTime::Set objects:
+Those recurrences are DateTime::Set objects:
 
   $dt_next_xmas = $dti->to_recurrence->next( DateTime->today );
 
-Note: DateTime::Event::Recurrence has only been tested with
+Recurrence generation has only been tested with
 Gregorian dates so far.
+
+This method will die if the
+C<DateTime::Event::Recurrence> package is not installed.
+
+Incomplete dates that have the I<year> defined will
+generate finite sets. This kind of sets can take a lot of 
+resources (RAM and CPU). 
+The following datetime would generate the set of all seconds in 2003:
+
+  2003-xx-xxTxx:xx:xx
 
 
 =item * contains
@@ -311,7 +378,7 @@ For example:
 
 =head1 TODO - "MAY-BE-USEFUL" METHODS
 
-These are some ideas for methods, that are not implemented.
+These are some ideas for new methods, that are not implemented.
 Let us know if any of these might be useful for you,
 at <datetime@perl.org>.
 
@@ -332,8 +399,6 @@ or is that simply not defined?
 =item * other C<DateTime> methods
 
 =item * other C<DateTime::Set> methods (next/previous/...)
-
-Those can be implemented using a cached to_recurrence()
 
 =item * set_week
 
