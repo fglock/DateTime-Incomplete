@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 37;
+use Test::More tests => 36;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -39,9 +39,6 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         'new() matches DT->new' );
 
 
-    is( $dti->has( 'year' ) , 1,
-        'has year' );
-
     is( $dti->has_year , 1,
         'has year' );
 
@@ -50,7 +47,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;
     is( $dti->datetime , $str,
         'undef year' );
 
-    is( $dti->has( 'year' ) , 0,
+    is( $dti->has_year , 0,
         'has no year' );
 
     $dti->set( month => undef );
