@@ -6,15 +6,13 @@ use Params::Validate qw( validate SCALAR BOOLEAN HASHREF OBJECT );
 use vars qw( $VERSION );
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
 use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
-use vars qw( @FIELDS );
+use vars qw( @FIELDS %FIELD_LENGTH );
 
 BEGIN
 {
     $VERSION = '0.00_04';
 
     $UNDEF_CHAR = 'x';
-    $UNDEF4 = $UNDEF_CHAR x 4;   # xxxx
-    $UNDEF2 = $UNDEF_CHAR x 2;   # xx
 
     # to_recurrence() method requires a recurrence module.
     # otherwise, it is not required.
@@ -27,6 +25,33 @@ BEGIN
 
     @FIELDS = ( year => 0, month => 1, day => 1, 
                 hour => 0, minute => 0, second => 0, nanosecond => 0 );
+    %FIELD_LENGTH = ( 
+                year => 4, month => 2, day => 2, 
+                hour => 2, minute => 2, second => 2, nanosecond => 9,
+                time_zone => 3, locale => 3 );
+
+    for ( keys %FIELD_LENGTH )
+    {
+      eval " 
+
+        # year() - plain value
+        sub $_ { 
+            \$_[0]->get( '$_' ) 
+        }
+
+        # has_year() - boolean
+        sub has_$_ { 
+            \$_[0]->has( '$_' ) 
+        }   
+
+        # _year() - stringification
+        sub _$_  { 
+            defined \$_[0]->$_ ? 
+            sprintf( \"%0.$FIELD_LENGTH{$_}d\", \$_[0]->$_ ) : 
+            \$UNDEF_CHAR x $FIELD_LENGTH{$_} 
+        } 
+      ";
+    }
 }
 
 # DATETIME-LIKE METHODS
@@ -142,27 +167,11 @@ sub truncate
     return $self;
 }
 
-for ( qw/ year month day hour minute second nanosecond time_zone locale / )
-{
-    eval " sub $_ { \$_[0]->get( '$_' ) } ";      # year()
-    eval " sub has_$_ { \$_[0]->has( '$_' ) } ";  # has_year()
-}
 *mon = \&month;
 *day_of_month = \&day;
 *mday = \&day;
 *min = \&minute;
 *sec = \&second;
-
-# Internal stringification methods.
-# some of these methods are not used, but they are defined just in case.
-# TODO: generate these subs using a hash
-sub _year       { defined $_[0]->year   ? sprintf( "%0.4d", $_[0]->year )   : $UNDEF4 }
-sub _month      { defined $_[0]->month  ? sprintf( "%0.2d", $_[0]->month )  : $UNDEF2 }
-sub _day        { defined $_[0]->day    ? sprintf( "%0.2d", $_[0]->day )    : $UNDEF2 }
-sub _hour       { defined $_[0]->hour   ? sprintf( "%0.2d", $_[0]->hour )   : $UNDEF2 }
-sub _minute     { defined $_[0]->minute ? sprintf( "%0.2d", $_[0]->minute ) : $UNDEF2 }
-sub _second     { defined $_[0]->second ? sprintf( "%0.2d", $_[0]->second ) : $UNDEF2 }
-sub _nanosecond { defined $_[0]->nanosecond ? sprintf( "%0.9d", $_[0]->nanosecond ) : $UNDEF_CHAR x 9 }
 
 sub ymd
 {
@@ -552,20 +561,6 @@ minute, and second all become 0.
 
 =over 4
 
-=item * get
-
-  $kin = $dti->get( 'kin' );  # a Mayan time
-
-Return the datetime field value, or C<undef>.
-
-
-=item * has
-
-  $isfrac = $dti->has( 'nanosecond' ); 
-
-Returns 1 if the datetime field value is defined; otherwise it returns 0.
-
-
 =item * set_base
 
   $dti->set_base( $dt );
@@ -674,6 +669,27 @@ methods in C<DateTime::Set> class.
 
 The datetimes are generated with 1 nanosecond precision. The last "time"
 value of a given day is 23:59:59.999999999 (for non leapsecond days).
+
+Implementation note:
+These methods are known to fail in certain cases. For example, if you had
+a DateTime::Infinite date defined with C<month => 2> 
+and you ask for the previous date before 'march-31'.
+
+=item * get
+
+  $kin = $dti->get( 'month' ); 
+
+Returns the datetime field value, or C<undef>. 
+You may want to use C<get_month> instead.
+
+
+=item * has
+
+  $isfrac = $dti->has( 'nanosecond' ); 
+
+Returns 1 if the datetime field value is defined; otherwise it returns 0. 
+You may want to use C<has_nanosecond> instead.
+
 
 =back
 
