@@ -1,0 +1,8 @@
+Changes file for DateTime::Incomplete
+
+0.00_02  2003-07-19
+   POD, makefile and CVS upload.
+
+0.00_01  2003-07-17
+   02incomplete.t created.
+

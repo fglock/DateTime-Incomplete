@@ -1,0 +1,4 @@
+- 02incomplete.t uses the old new() definition 
+  in which fields are defined by default.
+  They should be undef by default.
+
