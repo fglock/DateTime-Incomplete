@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+- become_datetime()
 - can_be_datetime()
 - has_date(), has_time()
 - defined_fields() method, contributed by Rick Measham

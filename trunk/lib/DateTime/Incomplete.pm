@@ -327,6 +327,16 @@ sub can_be_datetime {
     return 1;
 }  
 
+sub become_datetime {
+    my $self = shift;
+    return undef unless $self->has_year;
+    # warn "param = @{[  %{$self->{has}}  ]} ";
+    # return DateTime->new( %{$self->{has}} );
+    my @parm = map { ( $_, $self->$_() ) } $self->defined_fields;
+    # warn "param = @parm";
+    return DateTime->new( @parm );
+}
+
 sub set_time_zone
 {
     die "set_time_zone() requires a time_zone value" unless $#_ == 1;
@@ -1240,6 +1250,15 @@ Examples:
   Can not be datetime:
   2003-10-13Txx:xx:30
   xxxx-10-13Txx:xx:30 
+
+=item * become_datetime
+
+Returns a C<DateTime> object.
+
+Returns C<undef> if the year value is not set.
+
+This method may C<die> if the parameters are not valid 
+in the call to  C<DateTime->new>. 
 
 =item * set_base
 
