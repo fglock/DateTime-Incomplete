@@ -1097,7 +1097,7 @@ doesn't exist.
   $dtset1 = $dti->to_recurrence;   
   # Christmas recurrence, with _seconds_ resolution
 
-  $dti->set( hour => 0, minute => 0, second => 0, nanosecond => 0 );
+  $dti->truncate( to => 'day' );
   $dtset2 = $dti->to_recurrence;   
   # Christmas recurrence, with days resolution (hour/min/sec = 00:00:00)
 

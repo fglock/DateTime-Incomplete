@@ -40,7 +40,7 @@ while (<DATA>)
         eval "use DateTime::Locale::$1";
         die $@ if $@;
 
-        Test::More::diag("New locale: $locale\n");
+        # Test::More::diag("New locale: $locale\n");
 
         $dt = eval "DateTime::Incomplete->new( $params, time_zone => 'UTC', locale => '$locale' )";
         next;
