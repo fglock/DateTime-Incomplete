@@ -1259,6 +1259,7 @@ Ben Bennett <fiji[at]ayup.limey.net>,
 Claus Farber <claus[at]xn--frber-gra.muc.de>,
 Dave Rolsky <autarch[at]urth.org>,
 Eugene Van Der Pijll <pijll[at]gmx.net>,
+Rick Measham <rick[at]isite.net.au>,
 and the DateTime team.
 
 =head1 COPYRIGHT
