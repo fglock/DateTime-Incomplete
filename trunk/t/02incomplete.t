@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 28;
+use Test::More tests => 36;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -214,6 +214,35 @@ $UNDEF2 = $UNDEF_CHAR x 2;
       is( $dti_no_day->next( $dt )->datetime , '2003-12-24T00:00:00',
           'next xmas with "equal" value' );
 
+      $dt->add( seconds => 20 );
+      is( $dti_no_day->next( $dt )->datetime , '2003-12-24T00:01:00',
+          'next xmas with "during" value' );
+
+      $dt->add( days => 1 );
+      is( $dti_no_day->next( $dt )->datetime , '2004-12-24T00:00:00',
+          'next xmas with "after" value' );
+
+      is( $dti_no_day->previous( $dt )->datetime , '2003-12-24T00:59:00',
+          'previous xmas '.$dt->datetime.' with "after" value' );
+
+      $dt->subtract( days => 1 );
+      is( $dti_no_day->previous( $dt )->datetime , '2003-12-24T00:00:00',
+          'previous xmas '.$dt->datetime.' with "during" value' );
+
+      $dt->subtract( seconds => 10 );
+      is( $dti_no_day->previous( $dt )->datetime , '2003-12-24T00:00:00',
+          'previous xmas '.$dt->datetime.' with "equal" value' );
+
+      $dt->subtract( hours => 1 );
+      is( $dti_no_day->previous( $dt )->datetime , '2002-12-24T00:59:00',
+          'previous xmas '.$dt->datetime.' with "before" value' );
+
+      is( $dti_no_day->closest( $dt )->datetime , '2003-12-24T00:00:00',
+          'closest xmas '.$dt->datetime.'' );
+
+      $dt->subtract( months => 10 );
+      is( $dti_no_day->closest( $dt )->datetime , '2002-12-24T00:59:00',
+          'closest xmas '.$dt->datetime.'' );
     }
 
   # End: Tests to_recurrence()
