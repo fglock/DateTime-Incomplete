@@ -233,7 +233,6 @@ sub set
 	if ( $k eq 'locale' )
 	{
 	    $self->set_locale($v);
-	    next;
 	}
 
 	$self->{base}->set( $k => $v ) if $self->{base} && defined $v;
