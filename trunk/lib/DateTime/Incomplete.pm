@@ -234,15 +234,21 @@ sub base_class
 
 sub set
 {
-    # parameter checking is done in "base" class.
-    die "set() requires a field name and a value" unless $#_ == 2;
+    my $self = shift;
+    my %p = @_;
 
-    return $_[0]->set_time_zone if $_[1] eq 'time_zone';
-    return $_[0]->set_locale    if $_[1] eq 'locale';
+    while ( my ( $k, $v ) = each %p )
+    {
+	if ( $k eq 'locale' )
+	{
+	    $self->set_locale($v);
+	    next;
+	}
 
-    $_[0]->{base}->set( $_[1] => $_[2] ) 
-        if defined $_[2] && defined $_[0]->{base};
-    $_[0]->{has}{ $_[1] } = $_[2];
+	$self->{base}->set( $k => $v ) if $self->{base} && defined $v;
+
+	$self->{has}{ $k } = $v;
+    }
 }
 
 sub _get
@@ -274,7 +280,7 @@ sub set_locale
     if ( defined $locale )
     {
         $locale = DateTime::Locale->load( $locale ) unless ref $locale;
-        $_[0]->{base}->set_locale( $locale ) if defined $_[0]->{base};
+        $_[0]->{base}->set( locale => $locale ) if defined $_[0]->{base};
     }
     $_[0]->{has}{locale} = $locale;
 }
@@ -804,6 +810,8 @@ Use this to define or undefine a datetime field:
   $dti->set( day => 24 );
   $dti->set( day => undef );
 
+It accepts the same arguments as the C<set()> method in
+C<DateTime.pm>.
 
 =item * clone
 
