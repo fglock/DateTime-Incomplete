@@ -491,7 +491,7 @@ sub _format_nanosecs
     return $UNDEF_CHAR x $precision unless defined $self->nanosecond;
 
     # rd_nanosecs can have a fractional separator
-    my ( $ret, $frac ) = split /[.,]/, $self->_nanosecond;
+    my ( $ret, $frac ) = split /[.,]/, $self->nanosecond;
     $ret = sprintf "09d" => $ret;  # unless length( $ret ) == 9;
     $ret .= $frac if $frac;
 
@@ -641,7 +641,7 @@ sub next
 
                 if ( $self->$field != $result->$field )
                 {
-                    eval { $result->set( $field => $self->$field ) };
+                    eval { $result->set( $field => $self->$field ) }; 
                     if ( $@ ) 
                     {
                         $result->set( @fields );

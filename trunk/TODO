@@ -1,5 +1,7 @@
 TODO file for DateTime::Incomplete
 
+- Tests don't pass in Perl 5.00503
+
 - truncate( to => 'week' )
 
 - some accessors could work _without_ a "base".
