@@ -1,8 +1,5 @@
 TODO file for DateTime::Incomplete
 
-- FIXED: t/04base_overflow.t:
-         "set( day => 31 )->next( $dt )" might break if $dt is on february.
-
 - more tests for next/previous/closest with year and nanosecond
 - use $FIELDS[0] instead of 'year'; $FIELDS[-2] instead of nanosecond
 - change @FIELDS to a "class" constant (instead of "package")

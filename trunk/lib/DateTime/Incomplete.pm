@@ -344,39 +344,38 @@ sub previous
 
     REDO: for (1..10)
     {
-      my @fields = @FIELDS;
-      while ( @fields ) 
-      {
-        ( $field, $value ) = ( shift @fields, shift @fields );
-        if ( defined $self->$field )
+        my @fields = @FIELDS;
+        while ( @fields ) 
         {
-            $overflow = ( $self->$field > $result->$field );
-            return undef if $overflow && $field eq $FIELDS[0];
-
-            if ( $self->$field != $result->$field )
+            ( $field, $value ) = ( shift @fields, shift @fields );
+            if ( defined $self->$field )
             {
-                if ( $overflow )
+                $overflow = ( $self->$field > $result->$field );
+                return undef if $overflow && $field eq $FIELDS[0];
+
+                if ( $self->$field != $result->$field )
                 {
-                    $result->set( $field => $value, @fields );
-                    $result->subtract( nanoseconds => 1 );
-                    next REDO;
-                }
-                my $diff = $result->$field - $self->$field ;
-                $diff--;
-                $diff = 0 if $diff < 0;
-                $result->subtract( $field  . 's' => $diff );
-                $result->set( @fields );
-                $result->subtract( nanoseconds => 1 );
-                if ( $result->$field != $self->$field )
-                {
+                    if ( $overflow )
+                    {
+                        $result->set( $field => $value, @fields );
+                        $result->subtract( nanoseconds => 1 );
+                        next REDO;
+                    }
+                    my $diff = $result->$field - $self->$field ;
+                    $diff--;
+                    $result->subtract( $field  . 's' => $diff );
                     $result->set( @fields );
                     $result->subtract( nanoseconds => 1 );
+                    if ( $result->$field != $self->$field )
+                    {
+                        $result->set( @fields );
+                        $result->subtract( nanoseconds => 1 );
+                    } 
                 }
             }
+            $bigger_field = $field;
         }
-        $bigger_field = $field;
-      }
-      return $result;
+        return $result;
     }
     return undef;
 }
@@ -602,6 +601,9 @@ The "base" parameter is used as a default base datetime
 in the "to_datetime" method. It is also used for validating
 inputs to the "set" method.
 
+The base object must use the year/month/day system. 
+Most calendars use this system: Gregorian (C<DateTime>),
+Julian, and others.
 
 =item * base
 
