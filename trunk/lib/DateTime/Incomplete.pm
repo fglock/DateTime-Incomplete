@@ -75,7 +75,8 @@ sub set
 {
     # parameter checking is done in "base" class.
     die "set() requires a field name and a value" unless $#_ == 2;
-    $_[0]->{base}->set( $_[1] => $_[2] ) if defined $_[0]->{base};
+    $_[0]->{base}->set( $_[1] => $_[2] ) 
+        if defined $_[2] && defined $_[0]->{base};
     $_[0]->{has}{ $_[1] } = $_[2];
 }
 

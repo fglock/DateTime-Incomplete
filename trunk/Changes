@@ -1,8 +1,12 @@
 Changes file for DateTime::Incomplete
 
-   simpler 'next' code
-   locale, set_locale
-   some aliases added, for DateTime compatibility
+- set( day => undef ) would break if there was a base date.
+  Reported by Dave Rolsky
+- t/02incomplete.t SKIPs tests properly, when DT::Recurrence
+  is not installed
+- simpler 'next' code
+- locale, set_locale
+- some aliases added, for DateTime compatibility
 
 0.00_04  2003-07-22
    base

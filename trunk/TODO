@@ -1,8 +1,14 @@
 TODO file for DateTime::Incomplete
 
+- set( day => 31 )->next( $dt ) might break if $dt is on february.
+
 - more tests for next/previous/closest with year and nanosecond
 
-- locale and time_zone tests: mixing string and object time_zones
+- locale and time_zone tests:
+
+  mixing string and object time_zones
+
+  time_zone-only and locale-only DT::I objects
 
 - DT::Set needs a fix to avoid generating big in-memory sets,
   when the result of an operation is a finite set.
