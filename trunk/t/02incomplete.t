@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 24;
+use Test::More tests => 25;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -40,6 +40,9 @@ $UNDEF2 = $UNDEF_CHAR x 2;
 
 
     is( $dti->has( 'year' ) , 1,
+        'has year' );
+
+    is( $dti->has_year , 1,
         'has year' );
 
     $dti->set( year => undef );

@@ -110,18 +110,17 @@ sub clone
 sub is_finite { 1 }
 sub is_infinite { 0 }
 
-sub year       { $_[0]->get( 'year' ) }
-sub month      { $_[0]->get( 'month' ) }
-sub day        { $_[0]->get( 'day' ) }
-sub hour       { $_[0]->get( 'hour' ) }
-sub minute     { $_[0]->get( 'minute' ) }
-sub second     { $_[0]->get( 'second' ) }
-sub nanosecond { $_[0]->get( 'nanosecond' ) }
-sub time_zone  { $_[0]->get( 'time_zone' ) }
+
+for ( qw/ year month day hour minute second nanosecond time_zone / )
+{
+    eval " sub $_ { \$_[0]->get( '$_' ) } ";      # year()
+    eval " sub has_$_ { \$_[0]->has( '$_' ) } ";  # has_year()
+}
 
 
 # Internal stringification methods.
 # some of these methods are not used, but they are defined just in case.
+# TODO: generate these subs using a hash
 sub _year       { defined $_[0]->year   ? sprintf( "%0.4d", $_[0]->year )   : $UNDEF4 }
 sub _month      { defined $_[0]->month  ? sprintf( "%0.2d", $_[0]->month )  : $UNDEF2 }
 sub _day        { defined $_[0]->day    ? sprintf( "%0.2d", $_[0]->day )    : $UNDEF2 }
@@ -363,6 +362,10 @@ no local time adjust is made.
 =item * year, month, day, hour, minute, second, nanosecond
 
 Return the field value, or C<undef>.
+
+=item * has_year, has_month, has_day, has_hour, has_minute, has_second, has_nanosecond
+
+Returns 1 if the value is defined; otherwise it returns 0.
 
 =item * time_zone
 
