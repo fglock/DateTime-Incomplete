@@ -761,6 +761,62 @@ sub to_recurrence
 }
 
 
+sub STORABLE_freeze
+{
+    my $self = shift;
+    my $cloning = shift;
+
+    my $data = '';
+    for my $key ( keys %FIELD_LENGTH )
+    {
+        next unless defined $self->{has}{$key};
+
+        if ( $key eq 'locale' ) 
+        { 
+            $data .= "locale:" . $self->{has}{locale}->id; 
+        }
+        elsif ( $key eq 'time_zone' ) 
+        { 
+            $data .= "|tz:" . $self->{has}{time_zone}->name; 
+        }
+        else 
+        { 
+            $data .= "$key:$self->{has}{$key}|"; 
+        }
+    }
+
+    $data .= "|base:".$self->base->STORABLE_freeze if $self->has_base;
+
+    return $data;
+}
+
+sub STORABLE_thaw
+{
+    my $self = shift;
+    my $cloning = shift;
+    my $data = shift;
+
+    my $base;
+    ( $data, $base ) = split /\|base:/, $data;
+
+    if ( defined $base ) 
+    {
+        $base = DateTime::STORABLE_thaw( $base );
+    }
+
+    my %data = map { split /:/ } split /\|/, $data;
+
+    my $tz = DateTime::TimeZone->new( name => delete $data{tz} );
+    my $locale = delete $data{locale};
+
+    %{$self->{has}} = %data;
+    $self->{has}{tz} = $tz;
+    $self->{has}{locale} = DateTime::Locale->load($locale);
+    $self->{base} = $base;
+
+    return $self;
+}
+
 1;
 
 __END__
@@ -1115,8 +1171,6 @@ Some may be implemented in next versions:
   DefaultLanguage
   compare
   compare_ignore_floating
-
-There are no "Storable" class hooks.
 
 
 =head1 AUTHORS

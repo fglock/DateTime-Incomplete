@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+- added Storable hooks
 - "contains" takes the time_zone into account
 - fixed "strftime" of incomplete datetimes
 
