@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -90,6 +90,17 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         eval { $dt1 = $dti->next( $dt_19700220 ) };
         is( $dt1->datetime , '1970-03-30T00:00:00',
             'next skips invalid date (02-20)' );
+    }
+
+    TODO: {
+        local $TODO = "invalid DT::I should return undef";
+
+        $dti = DateTime::Incomplete->new(
+            month => 2, day =>  30,
+        );
+        eval { $dt1 = $dti->next( $base ) };
+        ok( ! defined $dt1 , 
+            'invalid incomplete datetime (02-30)' );
     }
 
 }
