@@ -219,7 +219,7 @@ sub new
         has => \%param,
     }, $class;
     $self->set_base( $base );
-    $self->set_locale( $self->{has}{locale} ) if $self->{has}{locale};
+    $self->set( locale => $self->{has}{locale} ) if $self->{has}{locale};
     $self->set_time_zone( $self->{has}{time_zone} ) if $self->{has}{time_zone};
     return $self;
 }
@@ -263,7 +263,7 @@ sub set
     {
 	if ( $k eq 'locale' )
 	{
-	    $self->set_locale($v);
+	    $self->_set_locale($v);
             next;
 	}
 
@@ -295,7 +295,7 @@ sub set_time_zone
     $_[0]->{has}{time_zone} = $time_zone;
 }
 
-sub set_locale
+sub _set_locale
 {
     die "set_locale() requires a locale value" unless $#_ == 1;
     my $locale = $_[1];
@@ -303,7 +303,7 @@ sub set_locale
     {
         $locale = DateTime::Locale->load( $locale ) unless ref $locale;
         $_[0]->{base}->set( locale => $locale ) if defined $_[0]->{base};
-    }
+    } 
     $_[0]->{has}{locale} = $locale;
 }
 
@@ -574,11 +574,11 @@ sub to_datetime
             $result->set_time_zone( $value );
             next;
         }        
-        if ( $key eq 'locale' )
-        {
-            $result->set_locale( $value );
-            next;
-        }
+        # if ( $key eq 'locale' )
+        # {
+        #    $result->set_locale( $value );
+        #    next;
+        # }
         $result->set( $key => $value );
     }
     return $result;
