@@ -35,7 +35,6 @@ BEGIN
     for ( keys %FIELD_LENGTH )
     {
       eval " 
-
         # year() - plain value
         sub $_ { 
             \$_[0]->get( '$_' ) 
@@ -45,14 +44,19 @@ BEGIN
         sub has_$_ { 
             \$_[0]->has( '$_' ) 
         }   
-
-        # _year() - stringification
-        sub _$_  { 
-            defined \$_[0]->$_ ? 
-            sprintf( \"%0.$FIELD_LENGTH{$_}d\", \$_[0]->$_ ) : 
-            \$UNDEF_CHAR x $FIELD_LENGTH{$_} 
-        } 
       ";
+  
+        if ( $_ ne 'nanosecond' )
+        {
+            eval "
+                # _year() - stringification
+                sub _$_  { 
+                    defined \$_[0]->$_ ? 
+                    sprintf( \"%0.$FIELD_LENGTH{$_}d\", \$_[0]->$_ ) : 
+                    \$UNDEF_CHAR x $FIELD_LENGTH{$_} 
+                } 
+            ";
+        }
     }
 
     # Generate DateTime read-only functions
@@ -80,6 +84,12 @@ BEGIN
         }";
     }
 
+}
+
+sub _nanosecond {
+    defined $_[0]->nanosecond ? 
+    $_[0]->nanosecond :
+    $UNDEF_CHAR x 9
 }
 
 *mon = \&month;
@@ -145,6 +155,9 @@ sub offset {
 }
 sub time_zone_short_name {
     $_[0]->_datetime_method( 'time_zone_short_name' );
+}
+sub time_zone_long_name  {
+    $_[0]->_datetime_method( 'time_zone_long_name' );
 }
 
 sub _from_datetime
@@ -336,6 +349,127 @@ sub hms
 sub iso8601 { join 'T', $_[0]->ymd('-'), $_[0]->hms(':') }
 *datetime = \&iso8601;
 
+
+# "strftime"
+
+# Copied from DateTime - we can't import %formats 
+# because it is a local variable.
+#
+# The changes made here may be imported back to DateTime in a future version.
+# Changes are marked with " # <--- change ";
+# _format_nanosecs was rewritten.
+# Added method: _am_pm
+
+my %formats =
+    ( 'a' => sub { $_[0]->day_abbr },
+      'A' => sub { $_[0]->day_name },
+      'b' => sub { $_[0]->month_abbr },
+      'B' => sub { $_[0]->month_name },
+      'c' => sub { $_[0]->strftime( $_[0]->{locale}->default_datetime_format ) },
+      'C' => sub { int( $_[0]->year / 100 ) },
+      'd' => sub { sprintf( '%02d', $_[0]->day_of_month ) },
+      'D' => sub { $_[0]->strftime( '%m/%d/%y' ) },
+      'e' => sub { sprintf( '%2d', $_[0]->day_of_month ) },
+      'F' => sub { $_[0]->ymd('-') },
+      'g' => sub { substr( $_[0]->week_year, -2 ) },
+      'G' => sub { $_[0]->week_year },
+      'H' => sub { sprintf( '%02d', $_[0]->hour ) },
+      'I' => sub { sprintf( '%02d', $_[0]->hour_12 ) },
+      'j' => sub { $_[0]->day_of_year },
+      'k' => sub { sprintf( '%2d', $_[0]->hour ) },
+      'l' => sub { sprintf( '%2d', $_[0]->hour_12 ) },
+      'm' => sub { sprintf( '%02d', $_[0]->month ) },
+      'M' => sub { sprintf( '%02d', $_[0]->minute ) },
+      'n' => sub { "\n" }, # should this be OS-sensitive?
+      'N' => sub { (shift)->_format_nanosecs( @_ ) },     # <--- change
+      'p' => sub { $_[0]->_am_pm( $_[0] ) },              # <--- change
+      'P' => sub { lc $_[0]->_am_pm( $_[0] ) },           # <--- change
+      'r' => sub { $_[0]->strftime( '%I:%M:%S %p' ) },
+      'R' => sub { $_[0]->strftime( '%H:%M' ) },
+      's' => sub { $_[0]->epoch },
+      'S' => sub { sprintf( '%02d', $_[0]->second ) },
+      't' => sub { "\t" },
+      'T' => sub { $_[0]->strftime( '%H:%M:%S' ) },
+      'u' => sub { $_[0]->day_of_week },
+      # algorithm from Date::Format::wkyr
+      'U' => sub { my $dow = $_[0]->day_of_week;
+                   $dow = 0 if $dow == 7; # convert to 0-6, Sun-Sat
+                   my $doy = $_[0]->day_of_year - 1;
+                   return int( ( $doy - $dow + 13 ) / 7 - 1 )
+                 },
+      'w' => sub { my $dow = $_[0]->day_of_week;
+                   return $dow % 7;
+                 },
+      'W' => sub { my $dow = $_[0]->day_of_week;
+                   my $doy = $_[0]->day_of_year - 1;
+                   return int( ( $doy - $dow + 13 ) / 7 - 1 )
+                 },
+      'x' => sub { $_[0]->strftime( $_[0]->{locale}->default_date_format ) },
+      'X' => sub { $_[0]->strftime( $_[0]->{locale}->default_time_format ) },
+      'y' => sub { sprintf( '%02d', substr( $_[0]->year, -2 ) ) },
+      'Y' => sub { return $_[0]->year },
+      'z' => sub { DateTime::TimeZone::offset_as_string( $_[0]->offset ) },
+      'Z' => sub { $_[0]->{tz}->short_name_for_datetime( $_[0] ) },
+      '%' => sub { '%' },
+    );
+
+$formats{h} = $formats{b};
+
+sub _am_pm { 
+  defined $_[0]->locale ?
+  $_[0]->locale->am_pm( $_[0] ) :
+  $UNDEF_CHAR x 2
+}
+
+sub _format_nanosecs
+{
+    my $self = shift;
+    my $precision = shift || 9;
+
+    # rd_nanosecs might contain a fractional separator
+    my ( $ret, $frac ) = split /[.,]/, $self->_nanosecond;
+    $ret = sprintf "09d" => $ret unless length( $ret ) == 9;
+    $ret .= $frac if $frac;
+
+    return substr( $ret, 0, $precision );
+}
+
+sub strftime
+{
+    my $self = shift;
+    # make a copy or caller's scalars get munged
+    my @formats = @_;
+
+    my @r;
+    foreach my $f (@formats)
+    {
+        $f =~ s/
+                %{(\w+)}
+               /
+                $self->$1() if $self->can($1);
+               /sgex;
+
+        # regex from Date::Format - thanks Graham!
+       $f =~ s/
+                %([%a-zA-Z])
+               /
+                $formats{$1} ? $formats{$1}->($self) : $1
+               /sgex;
+
+        # %3N
+        $f =~ s/
+                %(\d+)N
+               /
+                $formats{N}->($self, $1)
+               /sgex;
+
+        return $f unless wantarray;
+
+        push @r, $f;
+    }
+
+    return @r;
+}
 
 # DATETIME::INCOMPLETE METHODS
 
@@ -703,7 +837,19 @@ These are equivalent to DateTime stringification methods with the same name,
 except that the undefined fields are replaced by 'xx' or 'xxxx'.
 
 
-=item * week week_year week_number week_of_month day_name day_abbr day_of_week wday dow day_of_year doy quarter day_of_quarter doq weekday_of_month jd mjd is_leap_year ce_year era year_with_era last_day_of_month month_name month_abbr hour_1 hour_12 hour_12_0 fractional_second millisecond microsecond offset time_zone_short_name
+=item * strftime( $format, ... )
+
+This method implements functionality similar to the C<strftime()>
+method in C.  However, if given multiple format strings, then it will
+return multiple scalars, one for each format string.
+
+See the C<strftime Specifiers> section in C<DateTime> documentation
+for a list of all possible format specifiers.
+
+Undefined fields are replaced by 'xx' or 'xxxx'.
+
+
+=item * week week_year week_number week_of_month day_name day_abbr day_of_week wday dow day_of_year doy quarter day_of_quarter doq weekday_of_month jd mjd is_leap_year ce_year era year_with_era last_day_of_month month_name month_abbr hour_1 hour_12 hour_12_0 fractional_second millisecond microsecond offset time_zone_short_name time_zone_long_name
 
 These are equivalent to DateTime methods with the same name,
 except that they will return C<undef> if there is not enough data to compute
@@ -948,7 +1094,6 @@ Some may be implemented in next versions:
   epoch
   hires_epoch
   is_dst
-  strftime
   utc_rd_values
   utc_rd_as_seconds
   local_rd_as_seconds

@@ -1,5 +1,7 @@
 Changes file for DateTime::Incomplete
 
+- strftime
+- time_zone_long_name
 - today / now / from_epoch / from_object / from_day_of_year
 
 0.00_06  2003-07-25
