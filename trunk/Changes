@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+- next/previous "february" problem fixed.
 - set( day => undef ) would break if there was a base date.
   Reported by Dave Rolsky
 - t/02incomplete.t SKIPs tests properly, when DT::Recurrence

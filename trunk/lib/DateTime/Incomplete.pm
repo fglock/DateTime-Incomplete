@@ -10,7 +10,7 @@ use vars qw( @FIELDS %FIELD_LENGTH );
 
 BEGIN
 {
-    $VERSION = '0.00_04';
+    $VERSION = '0.00_05';
 
     $UNDEF_CHAR = 'x';
 
@@ -340,29 +340,45 @@ sub previous
 
     # warn "previous: self ".$self->datetime." base ".$result->datetime;
 
-    my @fields = @FIELDS;
-    my ( $field, $overflow, $bigger_field );
-    while ( @fields ) 
+    my ( $field, $value, $overflow, $bigger_field );
+
+    REDO: for (1..10)
     {
-        ( $field, undef ) = ( shift @fields, shift @fields );
+      my @fields = @FIELDS;
+      while ( @fields ) 
+      {
+        ( $field, $value ) = ( shift @fields, shift @fields );
         if ( defined $self->$field )
         {
             $overflow = ( $self->$field > $result->$field );
-            return undef if $overflow && $field eq 'year';
+            return undef if $overflow && $field eq $FIELDS[0];
 
             if ( $self->$field != $result->$field )
             {
-                $result->set( $field => $self->$field );
-                $result->subtract( $bigger_field . 's' => 1 ) if $overflow;
-                $result->add( $field . 's' => 1 );
+                if ( $overflow )
+                {
+                    $result->set( $field => $value, @fields );
+                    $result->subtract( nanoseconds => 1 );
+                    next REDO;
+                }
+                my $diff = $result->$field - $self->$field ;
+                $diff--;
+                $diff = 0 if $diff < 0;
+                $result->subtract( $field  . 's' => $diff );
                 $result->set( @fields );
                 $result->subtract( nanoseconds => 1 );
-                return $self->previous( $result ) if $overflow;
+                if ( $result->$field != $self->$field )
+                {
+                    $result->set( @fields );
+                    $result->subtract( nanoseconds => 1 );
+                }
             }
         }
         $bigger_field = $field;
+      }
+      return $result;
     }
-    return $result;
+    return undef;
 }
 
 sub closest
@@ -687,16 +703,20 @@ methods in C<DateTime::Set> class.
 The datetimes are generated with 1 nanosecond precision. The last "time"
 value of a given day is 23:59:59.999999999 (for non leapsecond days).
 
-Implementation note:
-These methods are known to fail in certain cases. For example, if you had
-a DateTime::Infinite date defined with C<month => 2> 
-and you ask for the previous date before 'march-31'.
+=cut
+
+# (FIXED)
+# Implementation note:
+# These methods are known to fail in certain cases. For example, if you had
+# a DateTime::Infinite date defined with C<month => 2> 
+# and you ask for the previous date before 'march-31'.
 
 =item * get
 
-  $kin = $dti->get( 'month' ); 
+  $month = $dti->get( 'month' ); 
 
 Returns the datetime field value, or C<undef>. 
+
 You may want to use C<get_month> instead.
 
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 9;
+use Test::More tests => 10;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -33,10 +33,10 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         'next - first date in february is ok' );
 
     TODO: {
-        local $TODO = "needs to change invalid day in order to fit in month";
+        # local $TODO = "needs to change invalid day in order to fit in month";
         $dt1->set( month => 3, day => 31 );
         eval { $dt1 = $dti->previous( $dt1 ) };
-        ok( $dt1 && ( $dt1->datetime eq '1970-02-28T59:59:59' ),
+        ok( $dt1 && ( $dt1->datetime eq '1970-02-28T23:59:59' ),
             'previous - last day in february' );
     }
 }
@@ -75,7 +75,7 @@ $UNDEF2 = $UNDEF_CHAR x 2;
 
     SKIP: {
        skip "previous - Would enter infinite recursion", 1
-           if 1;
+           if 0;
 
        $dt1->set( month => 3, day => 10 );
        $dt1 = $dti->previous( $dt1 );
@@ -106,6 +106,11 @@ $UNDEF2 = $UNDEF_CHAR x 2;
         eval { $dt1 = $dti->previous( $base ) };
         ok( ! defined $dt1 ,
             'previous - invalid incomplete datetime (02-30)' );
+        warn "#     ".$dt1->datetime if defined $dt1;
+
+        eval { $dt1 = $dti->closest( $base ) };
+        ok( ! defined $dt1 ,
+            'closest - invalid incomplete datetime (02-30)' );
         warn "#     ".$dt1->datetime if defined $dt1;
     }
 
