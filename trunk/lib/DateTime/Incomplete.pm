@@ -296,6 +296,14 @@ sub has {
     return 1  
 }  
 
+sub has_date {
+    $_[0]->has_year && $_[0]->has_month && $_[0]->has_day
+}
+
+sub has_time {
+    $_[0]->has_hour && $_[0]->has_minute && $_[0]->has_second
+}
+
 sub defined_fields {  
     # no params, returns a list of fields  
     my $self = shift;  
@@ -305,6 +313,18 @@ sub defined_fields {
         push @has, $_ if $self->_has( $_ );
     }
     return @has;
+}  
+
+sub can_be_datetime {  
+    my $self = shift;  
+    return 0 if ! $self->has_year;
+    my $can = 1;
+    for ( qw( month day hour minute second nanosecond ) )
+    {
+        return 0 if ! $can && $self->_has( $_ );
+        $can = 0 if $can && ! $self->_has( $_ );
+    }
+    return 1;
 }  
 
 sub set_time_zone
@@ -1033,8 +1053,16 @@ available in C<DateTime.pm>, such as C<mon()>, C<mday()>, etc.
 
 =item * has_locale
 
+=item * has_date
+
+=item * has_time
+
 Returns a boolean value indicating whether the corresponding value is
 defined.
+
+C<has_date> tests for year, month, and day.
+
+C<has_time> tests for hour, minute, and second.
 
 =item * has
 
@@ -1047,6 +1075,10 @@ Returns a boolean value indicating whether all fields in the argument list are d
     @fields = $dti->defined_fields;   # list of field names
 
 Returns a list containing the names of the fields that are defined.
+
+The list is ordered by: year, month, day, 
+hour, minute, second, nanosecond, 
+time_zone, locale.
 
 =item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
 
@@ -1191,6 +1223,24 @@ base datetime set.
 
 Returns true if the datetime is completely undefined.
 
+=item * can_be_datetime
+
+Returns true if the datetime has enough information to be converted to
+a proper DateTime object.
+
+The year field must be valid, followed by a sequence of valid fields.
+
+Examples:
+
+  Can be datetime:
+  2003-xx-xxTxx:xx:xx
+  2003-10-xxTxx:xx:xx  
+  2003-10-13Txx:xx:xx 
+
+  Can not be datetime:
+  2003-10-13Txx:xx:30
+  xxxx-10-13Txx:xx:30 
+
 =item * set_base
 
 Sets the base datetime object for the C<DateTime::Incomplete> object.
@@ -1216,6 +1266,11 @@ is given as an argument.
 
 This method may also die if it results in a datetime that doesn't
 actually exist, such as February 30, for example.
+
+The fields in the resulting datetime are set in this order:
+locale, time_zone, 
+nanosecond, second, minute, hour, 
+day, month, year. 
 
 =item * to_recurrence
 

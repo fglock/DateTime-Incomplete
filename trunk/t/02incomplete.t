@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 39;
+use Test::More tests => 44;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -126,6 +126,26 @@ my $UNDEF2 = $UNDEF_CHAR x 2;
 
     is( $dti->is_undef , 1,
         'is undef' );
+
+    # Tests can_be_datetime
+
+    {
+      is( $dti_complete->can_be_datetime, 1, 'can be datetime' );
+
+      my $dt = $dti_complete->clone;
+      $dt->set( year => undef );
+      is( $dt->can_be_datetime, 0, 'can not be datetime' );
+
+      $dt = $dti_complete->clone;
+      $dt->set( nanosecond => undef );
+      is( $dt->can_be_datetime, 1, 'can be datetime' );
+
+      $dt->set( second => undef );
+      is( $dt->can_be_datetime, 1, 'can be datetime' );
+
+      $dt->set( month => undef );
+      is( $dt->can_be_datetime, 0, 'can not be datetime' );
+    }
 
     # TESTS TODO:
     # set_time_zone, time_zone

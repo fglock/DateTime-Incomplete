@@ -42,7 +42,7 @@ TODO file for DateTime::Incomplete
 
 IDEAS
 
-* has_date / has_time
+* 'undef_char' could be configurable.
 
 * add_datetime
 
