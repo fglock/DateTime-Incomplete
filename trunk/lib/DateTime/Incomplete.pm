@@ -124,10 +124,6 @@ sub _datetime_method
     return $date->$method;
 }
 
-sub last_day_of_month {
-    $_[0]->_datetime_method( 'last_day_of_month', 'year', 'month' );
-}
-
 sub fractional_second {
     $_[0]->_datetime_method( 'fractional_second', 'second', 'nanosecond' );
 }
@@ -151,6 +147,9 @@ sub _from_datetime
     return $class->new( %param );
 }
 
+sub last_day_of_month {
+    $_[0]->_from_datetime( DateTime->last_day_of_month(@_) );
+}
 sub from_epoch {
     return (shift)->_from_datetime( DateTime->from_epoch( @_ ) );
 }
