@@ -6,10 +6,9 @@ use Test::More tests => 36;
 use DateTime;
 use DateTime::Incomplete;
 
-use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
-$UNDEF_CHAR = $DateTime::Incomplete::UNDEF_CHAR;
-$UNDEF4 = $UNDEF_CHAR x 4;   
-$UNDEF2 = $UNDEF_CHAR x 2;  
+my $UNDEF_CHAR = 'x';
+my $UNDEF4 = $UNDEF_CHAR x 4;
+my $UNDEF2 = $UNDEF_CHAR x 2;
 
 {
     # Tests for new(), set(), datetime()

@@ -4,10 +4,11 @@ use strict;
 use Params::Validate qw( validate SCALAR BOOLEAN HASHREF OBJECT );
 
 use vars qw( $VERSION );
-use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
-use vars qw( @FIELDS %FIELD_LENGTH );
 
 use DateTime::Event::Recurrence;
+
+my $UNDEF_CHAR;
+my ( @FIELDS, %FIELD_LENGTH );
 
 BEGIN
 {
