@@ -166,7 +166,7 @@ sub _from_datetime
     my $class = shift;
     my $dt = shift;
     my %param;
-    $param{$_} = $dt->$_() for ( keys %FIELD_LENGTH );
+    $param{$_} = $dt->$_() for @FIELDS_SORTED;
     return $class->new( %param );
 }
 
@@ -532,9 +532,9 @@ sub _format_epoch {
 }
 
 sub _format_am_pm { 
-  defined $_[0]->locale ?
-  $_[0]->locale->am_pm( $_[0] ) :
-  $UNDEF_CHAR x 2
+    defined $_[0]->locale ?
+    $_[0]->locale->am_pm( $_[0] ) :
+    $UNDEF_CHAR x 2
 }
 
 sub _format_nanosecs
@@ -928,7 +928,7 @@ sub STORABLE_freeze
     return if $cloning;
 
     my @data;
-    for my $key ( keys %FIELD_LENGTH )
+    for my $key ( @FIELDS_SORTED )
     {
         next unless defined $self->{has}{$key};
 
