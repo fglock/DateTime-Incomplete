@@ -5,6 +5,7 @@ use vars qw($VERSION);
 
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
 use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
+use vars qw( @FIELDS );
 
 BEGIN
 {
@@ -22,6 +23,9 @@ BEGIN
         use $RECURRENCE_MODULE;
         \$CAN_RECURRENCE = 1;
     ";
+
+    @FIELDS = ( year => 0, month => 1, day => 1, 
+                hour => 0, minute => 0, second => 0, nanosecond => 0 );
 }
 
 # DATETIME-LIKE METHODS
@@ -230,7 +234,6 @@ sub contains
     return 1;
 }
 
-
 sub next
 {
     # returns 'next or equal'
@@ -244,103 +247,36 @@ sub next
 
     my $result = $base->clone;
 
-    # warn "self ".$self->datetime." base ".$result->datetime;
+    # warn "next: self ".$self->datetime." base ".$result->datetime;
 
-    if ( defined $self->year )
+    my @fields = @FIELDS;
+    my ( $field, $overflow, $bigger_field );
+    while ( @fields ) 
     {
-        return undef if $self->year < $result->year;
-        if ( $self->year > $result->year )
+        ( $field, undef ) = ( shift @fields, shift @fields );
+        if ( defined $self->$field )
         {
-            # first date in year
-            $result->set( year => $self->year, month => 1, day => 1, hour => 0, 
-                          minute => 0, second => 0, nanosecond => 0 );
-        }
-    }
-    if ( defined $self->month )
-    {
-        if ( $self->month < $result->month )
-        {
-            $result->set( month => $self->month );
-            $result->add( years => 1 );
-            return $self->next( $result );
-        }
-        if ( $self->month > $result->month )
-        {
-            $result->set( month => $self->month, day => 1, hour => 0, minute => 0, 
-                          second => 0, nanosecond => 0 );
-        }
-    }
-    if ( defined $self->day )
-    {
-        if ( $self->day < $result->day )
-        {
-            $result->set( day => $self->day );
-            $result->add( months => 1 ); 
-            return $self->next( $result );
-        }
-        if ( $self->day > $result->day )
-        {
-            $result->set( day => $self->day, hour => 0, minute => 0, second => 0, 
-                          nanosecond => 0 );
-        }
-    }
+            $overflow = ( $self->$field < $result->$field );
+            return undef if $overflow && $field eq 'year';
 
-    if ( defined $self->hour )
-    {
-        if ( $self->hour < $result->hour )
-        {
-            $result->set( hour => $self->hour );
-            $result->add( days => 1 ); 
-            return $self->next( $result );
+            if ( $self->$field != $result->$field )
+            {
+                if ( $overflow ) 
+                {
+                    $result->set( $field => $self->$field );
+                    $result->add( $bigger_field . 's' => 1 );
+                    return $self->next( $result );
+                }
+                else
+                {
+                    $result->set( $field => $self->$field, @fields );
+                }
+            }
         }
-        if ( $self->hour > $result->hour )
-        {
-            $result->set( hour => $self->hour, minute => 0, second => 0, nanosecond => 0 );
-        }
+        $bigger_field = $field;
     }
-
-    if ( defined $self->minute )
-    {
-        if ( $self->minute < $result->minute )
-        {
-            $result->set( minute => $self->minute );
-            $result->add( hours => 1 ); 
-            return $self->next( $result );
-        }
-        if ( $self->minute > $result->minute )
-        {
-            $result->set( minute => $self->minute, second => 0, nanosecond => 0 );
-        }
-    }
-
-    if ( defined $self->second )
-    {
-        if ( $self->second < $result->second )
-        {
-            $result->set( second => $self->second );
-            $result->add( minutes => 1 ); 
-            return $self->next( $result );
-        }
-        if ( $self->second > $result->second )
-        {
-            $result->set( second => $self->second, nanosecond => 0 );
-        }
-    }
-
-    if ( defined $self->nanosecond )
-    {
-        if ( $self->nanosecond < $result->nanosecond )
-        {
-            $result->set( nanosecond => $self->nanosecond );
-            $result->add( seconds => 1 ); 
-            return $self->next( $result );
-        }
-    }
-
     return $result;
-
 }
-
 
 sub previous
 {
@@ -357,8 +293,7 @@ sub previous
 
     # warn "previous: self ".$self->datetime." base ".$result->datetime;
 
-    my @fields = ( year => 0, month => 1, day => 1, hour => 0,
-                   minute => 0, second => 0, nanosecond => 0 );
+    my @fields = @FIELDS;
     my ( $field, $overflow, $bigger_field );
     while ( @fields ) 
     {

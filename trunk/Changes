@@ -1,5 +1,6 @@
 Changes file for DateTime::Incomplete
 
+   simpler 'next' code
    locale, set_locale
    some aliases added, for DateTime compatibility
 
