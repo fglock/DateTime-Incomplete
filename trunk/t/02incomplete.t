@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 25;
+use Test::More tests => 28;
 use DateTime;
 use DateTime::Incomplete;
 
@@ -191,14 +191,29 @@ $UNDEF2 = $UNDEF_CHAR x 2;
       $dti_no_day->set( day => 24 );         # xx-12-24T00:00:00
       $dti_no_day->set( minute => undef );   # xx-12-24T00:xx:00
 
+
+      # to_recurrence
+
       $set = $dti_no_day->to_recurrence;
 
       my $dt = DateTime->new( year => 2003 );
 
       is( $set->next( $dt )->datetime , '2003-12-24T00:00:00',
-          'next xmas' );
+          'next xmas - recurrence' );
       is( $set->previous( $dt )->datetime , '2002-12-24T00:59:00',
-          'last xmas' );
+          'last xmas - recurrence' );
+
+      # next
+
+      is( $dti_no_day->next( $dt )->datetime , '2003-12-24T00:00:00',
+          'next xmas' );
+      $dt->subtract( seconds => 10 );
+      is( $dti_no_day->next( $dt )->datetime , '2003-12-24T00:00:00',
+          'next xmas again' );
+      $dt = $dti_no_day->next( $dt );
+      is( $dti_no_day->next( $dt )->datetime , '2003-12-24T00:00:00',
+          'next xmas with "equal" value' );
+
     }
 
   # End: Tests to_recurrence()

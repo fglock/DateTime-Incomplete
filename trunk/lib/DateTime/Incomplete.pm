@@ -29,8 +29,7 @@ BEGIN
 
 sub new 
 {
-    # There is not much parameter checking, because we don't know in advance
-    # which Calendar will be used. But this may change later.
+    # parameter checking is done in "set" method.
     my $class = shift;
     my %param = @_;
 
@@ -72,8 +71,7 @@ sub set_base
 
 sub set
 {
-    # There is not much parameter checking, because we don't know in advance
-    # which Calendar will be used. But this may change later.
+    # parameter checking is done in "base" class.
     die "set() requires a field name and a value" unless $#_ == 2;
     $_[0]->{base}->set( $_[1] => $_[2] ) if defined $_[0]->{base};
     $_[0]->{has}{ $_[1] } = $_[2];
@@ -131,30 +129,26 @@ sub _nanosecond { defined $_[0]->nanosecond ? sprintf( "%0.9d", $_[0]->nanosecon
 
 sub ymd
 {
-    my ( $self, $sep ) = @_;
-    $sep = '-' unless defined $sep;
+    my ( $self, $sep ) = ( @_, '-' );
     return $self->_year . $sep. $self->_month . $sep . $self->_day;
 }
 *date = \&ymd;
 
 sub mdy
 {
-    my ( $self, $sep ) = @_;
-    $sep = '-' unless defined $sep;
+    my ( $self, $sep ) = ( @_, '-' );
     return $self->_month . $sep. $self->_day . $sep . $self->_year;
 }
 
 sub dmy
 {
-    my ( $self, $sep ) = @_;
-    $sep = '-' unless defined $sep;
+    my ( $self, $sep ) = ( @_, '-' );
     return $self->_day . $sep. $self->_month . $sep . $self->_year;
 }
 
 sub hms
 {
-    my ( $self, $sep ) = @_;
-    $sep = ':' unless defined $sep;
+    my ( $self, $sep ) = ( @_, ':' );
     return $self->_hour . $sep. $self->_minute . $sep . $self->_second;
 }
 # don't want to override CORE::time()
@@ -224,6 +218,109 @@ sub contains
 
 sub next
 {
+    # returns 'next or equal'
+
+    my $self = shift;
+    my $base = shift;
+    $base = $self->{base} if defined $self->{base} &&
+                                  ! defined $base;
+    die "no base datetime" unless defined $base && 
+                                  UNIVERSAL::can( $base, 'utc_rd_values' );
+
+    my $result = $base->clone;
+
+    if ( defined $self->year )
+    {
+        return undef if $self->year > $result->year;
+        if ( $self->year < $result->year )
+        {
+            # first date in year
+            $result->set( year => $self->year, month => 1, day => 1, hour => 0, 
+                          minute => 0, second => 0, nanosecond => 0 );
+        }
+    }
+    if ( defined $self->month )
+    {
+        if ( $self->month < $result->month )
+        {
+            $result->set( month => $self->month );
+            $result->add( years => 1 );
+            return $self->next( $result );
+        }
+        if ( $self->month > $result->month )
+        {
+            $result->set( month => $self->month, day => 1, hour => 0, minute => 0, 
+                          second => 0, nanosecond => 0 );
+        }
+    }
+    if ( defined $self->day )
+    {
+        if ( $self->day < $result->day )
+        {
+            $result->set( day => $self->day );
+            $result->add( months => 1 ); 
+            return $self->next( $result );
+        }
+        if ( $self->day > $result->day )
+        {
+            $result->set( day => $self->day, hour => 0, minute => 0, second => 0, 
+                          nanosecond => 0 );
+        }
+    }
+
+    if ( defined $self->hour )
+    {
+        if ( $self->hour < $result->hour )
+        {
+            $result->set( hour => $self->hour );
+            $result->add( days => 1 ); 
+            return $self->next( $result );
+        }
+        if ( $self->hour > $result->hour )
+        {
+            $result->set( hour => $self->hour, minute => 0, second => 0, nanosecond => 0 );
+        }
+    }
+
+    if ( defined $self->minute )
+    {
+        if ( $self->minute < $result->minute )
+        {
+            $result->set( minute => $self->minute );
+            $result->add( hours => 1 ); 
+            return $self->next( $result );
+        }
+        if ( $self->minute > $result->minute )
+        {
+            $result->set( minute => $self->minute, second => 0, nanosecond => 0 );
+        }
+    }
+
+    if ( defined $self->second )
+    {
+        if ( $self->second < $result->second )
+        {
+            $result->set( second => $self->second );
+            $result->add( minutes => 1 ); 
+            return $self->next( $result );
+        }
+        if ( $self->second > $result->second )
+        {
+            $result->set( second => $self->second, nanosecond => 0 );
+        }
+    }
+
+    if ( defined $self->nanosecond )
+    {
+        if ( $self->nanosecond < $result->nanosecond )
+        {
+            $result->set( nanosecond => $self->nanosecond );
+            $result->add( seconds => 1 ); 
+            return $self->next( $result );
+        }
+    }
+
+    return $result;
 
 }
 
@@ -484,6 +581,17 @@ For example:
   2003-xx-xx contains 2003-12-24
   2003-xx-xx does not contain 1999-12-14
 
+=item * next
+
+  $dt2 = $dti->next( $dt );
+
+Returns the next value after or equal to a given datetime value,
+that is a valid complete date.
+
+If no datetime is given, it uses the "base" datetime .
+
+Returns C<undef> if there is no such datetime.
+
 =back
 
 =head1 TODO - "MAY-BE-USEFUL" METHODS
@@ -508,7 +616,7 @@ or is that simply not defined?
 
 =item * other C<DateTime> methods (strftime, locale ... )
 
-=item * other C<DateTime::Set> methods (next/previous/...)
+=item * other C<DateTime::Set> methods (previous/...)
 
 =item * set_week
 
