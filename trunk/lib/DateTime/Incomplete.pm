@@ -379,6 +379,9 @@ sub closest
     my $dt1 = $self->previous( $base );
     my $dt2 = $self->next( $base );
 
+    return $dt1 unless defined $dt2;
+    return $dt2 unless defined $dt1;
+
     # warn "self ".$self->datetime." base ".$base->datetime;
     # warn "dt1 ".$dt1->datetime." dt2 ".$dt2->datetime;
 
