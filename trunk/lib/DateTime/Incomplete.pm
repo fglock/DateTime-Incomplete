@@ -10,7 +10,7 @@ use vars qw( @FIELDS %FIELD_LENGTH );
 
 BEGIN
 {
-    $VERSION = '0.00_05';
+    $VERSION = '0.00_06';
 
     $UNDEF_CHAR = 'x';
 
@@ -29,6 +29,8 @@ BEGIN
                 year => 4, month => 2, day => 2, 
                 hour => 2, minute => 2, second => 2, nanosecond => 9,
                 time_zone => 3, locale => 3 );
+
+    # Generate named accessors
 
     for ( keys %FIELD_LENGTH )
     {
@@ -52,10 +54,101 @@ BEGIN
         } 
       ";
     }
+
+    # Generate DateTime read-only functions
+    for ( qw/
+        week week_year week_number week_of_month
+        day_name day_abbr 
+        day_of_week wday dow
+        day_of_year doy
+        quarter day_of_quarter doq
+        weekday_of_month
+        jd mjd
+        / )
+    {
+        eval "sub $_ {
+            \$_[0]->_datetime_method( $_, 'year', 'month', 'day' )
+        }";
+    }
+
+    for ( qw/
+        is_leap_year ce_year era year_with_era
+        / )
+    {
+        eval "sub $_ {
+            \$_[0]->_datetime_method( $_, 'year' )
+        }";
+    }
+
 }
 
-# DATETIME-LIKE METHODS
+*mon = \&month;
+*day_of_month = \&day;
+*mday = \&day;
+*min = \&minute;
+*sec = \&second;
 
+# Internal sub to call "DateTime" methods
+sub _datetime_method
+{
+    my ( $self, $method ) = ( shift, shift );
+    my @fields = @_;   # list of required fields
+    my $date;
+    for ( @fields )
+    {
+        return undef unless ( $self->has($_) )
+    }
+    my %param; 
+
+    # if we don't need 'year', then we can safely set it to whatever.
+    $param{year} = 1970 if ! @fields || $fields[0] ne 'year';
+
+    $param{locale} = $self->locale if $self->has_locale;
+    $param{time_zone} = $self->time_zone if $self->has_time_zone;
+    $param{$_} = $self->$_ for @fields;
+    $date = $self->base_class->new( %param );
+    
+    return $date->$method;
+}
+
+sub last_day_of_month {
+    $_[0]->_datetime_method( 'last_day_of_month', 'year', 'month' );
+}
+sub month_name {
+    $_[0]->_datetime_method( 'month_name', 'month' );
+}
+sub month_abbr {
+    $_[0]->_datetime_method( 'month_abbr', 'month' );
+}
+
+sub hour_1 {
+    $_[0]->_datetime_method( 'hour_1', 'hour' );
+}
+sub hour_12 {
+    $_[0]->_datetime_method( 'hour_12', 'hour' );
+}
+sub hour_12_0 {
+    $_[0]->_datetime_method( 'hour_12_0', 'hour' );
+}
+sub fractional_second {
+    $_[0]->_datetime_method( 'fractional_second', 'second', 'nanosecond' );
+}
+sub millisecond {
+    $_[0]->_datetime_method( 'millisecond', 'nanosecond' );
+}
+sub microsecond {
+    $_[0]->_datetime_method( 'microsecond', 'nanosecond' );
+}
+
+sub offset {
+    $_[0]->_datetime_method( 'offset' );
+}
+sub time_zone_short_name {
+    $_[0]->_datetime_method( 'time_zone_short_name' );
+}
+
+
+# DATETIME-LIKE METHODS
 
 sub new 
 {
@@ -95,6 +188,17 @@ sub base
 {
     return undef unless defined $_[0]->{base};
     $_[0]->{base}->clone;
+}
+
+sub has_base
+{
+    return defined $_[0]->{base} ? 1 : 0;
+}
+
+sub base_class
+{
+    return 'DateTime' unless ref $_[0]->{base};
+    return ref $_[0]->{base};
 }
 
 sub set
@@ -167,11 +271,8 @@ sub truncate
     return $self;
 }
 
-*mon = \&month;
-*day_of_month = \&day;
-*mday = \&day;
-*min = \&minute;
-*sec = \&second;
+
+# Stringification methods
 
 sub ymd
 {
@@ -556,15 +657,26 @@ Returns 1 if the value is defined; otherwise it returns 0.
 This returns the C<DateTime::TimeZone> object for the datetime object,
 or C<undef>.
 
+
 =item * locale
 
 This returns the C<DateTime::Locale> object for the datetime object,
 or C<undef>.
 
+
 =item * datetime, ymd, date, hms, time, iso8601, mdy, dmy
 
 These are equivalent to DateTime stringification methods with the same name, 
-except that undefined fields are replaced by 'xx' or 'xxxx'.
+except that the undefined fields are replaced by 'xx' or 'xxxx'.
+
+
+=item * week week_year week_number week_of_month day_name day_abbr day_of_week wday dow day_of_year doy quarter day_of_quarter doq weekday_of_month jd mjd is_leap_year ce_year era year_with_era last_day_of_month month_name month_abbr hour_1 hour_12 hour_12_0 fractional_second millisecond microsecond offset time_zone_short_name
+
+These are equivalent to DateTime methods with the same name,
+except that they will return C<undef> if there is not enough data to compute
+the result.
+
+For example, C<is_leap_year> returns C<undef> if there is no year.
 
 
 =item * is_finite, is_infinite
@@ -605,9 +717,20 @@ The base object must use the year/month/day system.
 Most calendars use this system: Gregorian (C<DateTime>),
 Julian, and others.
 
+
 =item * base
 
 Returns the C<base> datetime value, or C<undef>.
+
+
+=item * base_class
+
+Returns the package name of the C<base> datetime value, or "DateTime".
+
+
+=item * has_base
+
+Returns 1 if the C<base> value is defined; otherwise it returns 0.
 
 
 =item * is_undef
@@ -644,7 +767,12 @@ doesn't exist.
 =item * to_recurrence
 
   $dti = DateTime::Incomplete->new( month => 12, day => 24 );
-  $dtset= $dti->to_recurrence;   # Christmas day recurrence
+  $dtset1 = $dti->to_recurrence;   
+  # Christmas recurrence, with _seconds_ resolution
+
+  $dti->truncate( to => day );
+  $dtset2 = $dti->to_recurrence;   
+  # Christmas recurrence, with days resolution (hour/min/sec = 00:00:00)
 
 This method generates the set of all possible datetimes
 that fit into an incomplete datetime definition.
@@ -662,7 +790,7 @@ C<DateTime::Event::Recurrence> package is not installed.
 Incomplete dates that have the I<year> defined will
 generate finite sets. This kind of sets can take a lot of 
 resources (RAM and CPU). 
-The following datetime would generate the set of all seconds in 2003:
+The following datetime would generate the set of I<all seconds> in 2003:
 
   2003-xx-xxTxx:xx:xx
 
@@ -705,13 +833,6 @@ methods in C<DateTime::Set> class.
 The datetimes are generated with 1 nanosecond precision. The last "time"
 value of a given day is 23:59:59.999999999 (for non leapsecond days).
 
-=cut
-
-# (FIXED)
-# Implementation note:
-# These methods are known to fail in certain cases. For example, if you had
-# a DateTime::Infinite date defined with C<month => 2> 
-# and you ask for the previous date before 'march-31'.
 
 =item * get
 
@@ -736,34 +857,28 @@ You may want to use C<has_nanosecond> instead.
 =head1 DIFFERENCES BETWEEN "DATETIME" AND "DATETIME::INCOMPLETE"
 
 These methods are not implemented in C<DateTime::Incomplete>
-(some will be implemented in next versions):
+(some may be implemented in next versions):
 
-  from_epoch, epoch, hires_epoch
-  now, today
+  from_epoch
+  epoch
+  hires_epoch
+  now
+  today
   from_object
-  last_day_of_month
   from_day_of_year
-  ce_year, era, year_with_era
-  month_name, month_abbr
-  day_of_week, wday, dow
-  day_name, day_abbr
-  day_of_year, doy
-  quarter, day_of_quarter, doq
-  weekday_of_month
-  hour_1, hour_12, hour_12_0
-  fractional_second, millisecond, microsecond
-  is_leap_year
-  week, week_year, week_number, week_of_month
-  jd, mjd
-  offset, is_dst, time_zone_short_name
+  is_dst
   strftime
-  utc_rd_values, utc_rd_as_seconds, local_rd_as_seconds
+  utc_rd_values
+  utc_rd_as_seconds
+  local_rd_as_seconds
+
   add_duration, add, subtract_duration, subtract, subtract_datetime
 
 There are no class methods. The following are not implemented:
 
   DefaultLanguage
-  compare, compare_ignore_floating
+  compare
+  compare_ignore_floating
 
 There are no "Storable" class hooks.
 
