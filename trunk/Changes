@@ -1,6 +1,6 @@
 Changes file for DateTime::Incomplete
 
-- become_datetime()
+- to_datetime() uses "today" as a base date, is none is given.
 - can_be_datetime()
 - has_date(), has_time()
 - defined_fields() method, contributed by Rick Measham

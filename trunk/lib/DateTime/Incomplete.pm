@@ -327,15 +327,15 @@ sub can_be_datetime {
     return 1;
 }  
 
-sub become_datetime {
-    my $self = shift;
-    return undef unless $self->has_year;
-    # warn "param = @{[  %{$self->{has}}  ]} ";
-    # return DateTime->new( %{$self->{has}} );
-    my @parm = map { ( $_, $self->$_() ) } $self->defined_fields;
-    # warn "param = @parm";
-    return DateTime->new( @parm );
-}
+#sub become_datetime {
+#    my $self = shift;
+#    return undef unless $self->has_year;
+#    # warn "param = @{[  %{$self->{has}}  ]} ";
+#    # return DateTime->new( %{$self->{has}} );
+#    my @parm = map { ( $_, $self->$_() ) } $self->defined_fields;
+#    # warn "param = @parm";
+#    return DateTime->new( @parm );
+#}
 
 sub set_time_zone
 {
@@ -614,12 +614,18 @@ sub to_datetime
 {
     my $self = shift;
     my %param = @_;
-    return $self->{base}->clone if defined $self->{base} &&
+    $param{base} = $self->{base} if defined $self->{base} &&
                                   ! exists $param{base};
-    die "no base datetime" unless exists $param{base} && 
-                                  UNIVERSAL::can( $param{base}, 'utc_rd_values' );
-
-    my $result = $param{base}->clone;
+    my $result;
+    if ( defined $param{base} && 
+         UNIVERSAL::can( $param{base}, 'utc_rd_values' ) )
+    {
+        $result = $param{base}->clone;
+    }
+    else
+    {
+        $result = DateTime->today;
+    }
     my ($key, $value);
     for $key ( reverse @FIELDS_SORTED )
     {
@@ -1109,9 +1115,12 @@ as appropriate.
     my $epoch = $dti->epoch( base => $dt );
 
 These methods are equivalent to the C<DateTime> methods with the same
-name, but they will return C<undef> if no base datetime is defined.
+name.
+
 They all accept a "base" argument to use in order to calculate the
 method's return values.
+
+If no "base" argument is given, then C<today> is used.
 
 =item * is_finite, is_infinite
 
@@ -1128,8 +1137,8 @@ documentation for a list of all possible format specifiers.
 
 Undefined fields are replaced by 'xx' or 'xxxx' as appropriate.
 
-The specification C<%s> (epoch) returns C<xxxxxx>, unless the object
-has a base datetime set.
+The specification C<%s> (epoch) is calculated using C<today> as the base date,
+unless the object has a base datetime set.
 
 =back
 
@@ -1251,14 +1260,16 @@ Examples:
   2003-10-13Txx:xx:30
   xxxx-10-13Txx:xx:30 
 
-=item * become_datetime
+=cut
 
-Returns a C<DateTime> object.
-
-Returns C<undef> if the year value is not set.
-
-This method may C<die> if the parameters are not valid 
-in the call to  C<DateTime->new>. 
+#=item * become_datetime
+#
+#Returns a C<DateTime> object.
+#
+#Returns C<undef> if the year value is not set.
+#
+#This method may C<die> if the parameters are not valid 
+#in the call to  C<DateTime->new>. 
 
 =item * set_base
 
@@ -1280,10 +1291,10 @@ This method takes an optional "base" parameter and returns a
 The resulting datetime can be either before of after the given base
 datetime. No adjustments are made, besides setting the missing fields.
 
-This method will die if the object has no base datetime set and none
+This method will use C<today> if the object has no base datetime set and none
 is given as an argument.
 
-This method may also die if it results in a datetime that doesn't
+This method may die if it results in a datetime that doesn't
 actually exist, such as February 30, for example.
 
 The fields in the resulting datetime are set in this order:
