@@ -233,6 +233,7 @@ sub set
 	if ( $k eq 'locale' )
 	{
 	    $self->set_locale($v);
+            next;
 	}
 
 	$self->{base}->set( $k => $v ) if $self->{base} && defined $v;
@@ -257,7 +258,7 @@ sub set_time_zone
     my $time_zone = $_[1];
     if ( defined $time_zone )
     {
-        # $time_zone = DateTime::TimeZone->load( $time_zone ) unless ref $time_zone;
+        $time_zone = DateTime::TimeZone->new( name => $time_zone ) unless ref $time_zone;
         $_[0]->{base}->set_time_zone( $time_zone ) if defined $_[0]->{base};
     }
     $_[0]->{has}{time_zone} = $time_zone;
@@ -458,7 +459,7 @@ sub _format_nanosecs
 
     return $UNDEF_CHAR x $precision unless defined $self->nanosecond;
 
-    # rd_nanosecs might contain a fractional separator
+    # rd_nanosecs can have a fractional separator
     my ( $ret, $frac ) = split /[.,]/, $self->_nanosecond;
     $ret = sprintf "09d" => $ret;  # unless length( $ret ) == 9;
     $ret .= $frac if $frac;
@@ -481,9 +482,11 @@ sub strftime
                 if ( $self->can($1) ) 
                 {
                     my $tmp = $self->$1();
-                    return $tmp if defined $tmp; 
-                    return $UNDEF_CHAR x $FIELD_LENGTH{$1} if exists $FIELD_LENGTH{$1};
-                    $UNDEF_CHAR x 2;
+                    defined $tmp ?
+                            $tmp :
+                            ( exists $FIELD_LENGTH{$1} ?
+                                   $UNDEF_CHAR x $FIELD_LENGTH{$1} :
+                                   $UNDEF_CHAR x 2 );
                 }
                /sgex;
 
