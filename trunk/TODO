@@ -8,6 +8,20 @@ TODO file for DateTime::Incomplete
    2003-06
    2000-06-15
    2000-06-15T10
+- Rick Measham said:
+   if ($dti->can_be_datetime) {
+      $dti->become_datetime
+   }
+
+  or else an incomplete could automatically convert itself to a DateTime
+  once it had enough information?!?!?
+
+  I figure an Incomplete can become a DateTime if:
+
+  We have a Year, Month and Day, but no time (becomes 00:00:00) -or-
+  We have a Year, Month, Day, Hour and Minute -or-
+  We have a Year, Month, Day, Hour, Minute and Second -or-
+  We have a Year, Month, Day, Hour, Minute, Second and Nanosecond
 
 - test Storable hooks
 
