@@ -1,5 +1,7 @@
 TODO file for DateTime::Incomplete
 
+- truncate( to => 'week' )
+
 - some accessors could work _without_ a "base".
 - epoch() could be valid for "absolute" incomplete datetimes like:
    2003

@@ -1,5 +1,7 @@
 Changes file for DateTime::Incomplete
 
+0.01  2003-11-01
+- documentation revision, by Dave Rolsky
 - documented the error handling: mutators die / accesors return undef
 - from_day_of_year does not define "time" by default
 - DateTime methods:

@@ -12,3 +12,4 @@ t/04base_overflow.t
 t/05datetime.t
 t/13strftime.t
 
+META.yml                                Module meta-data (added by MakeMaker)
