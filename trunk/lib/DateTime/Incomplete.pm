@@ -1,8 +1,9 @@
 package DateTime::Incomplete;
 
 use strict;
-use vars qw($VERSION);
+use Params::Validate qw( validate SCALAR BOOLEAN HASHREF OBJECT );
 
+use vars qw( $VERSION );
 use vars qw( $UNDEF_CHAR $UNDEF2 $UNDEF4 );
 use vars qw( $CAN_RECURRENCE $RECURRENCE_MODULE );
 use vars qw( @FIELDS );
@@ -118,6 +119,28 @@ sub clone
 sub is_finite { 1 }
 sub is_infinite { 0 }
 
+
+sub truncate
+{
+    my $self = shift;
+    my %p = validate( @_,
+                      { to =>
+                        { regex => qr/^(?:year|month|day|hour|minute|second)$/ },
+                      },
+                    );
+
+    my @fields = @FIELDS;
+    my $field;
+    my $value;
+    my $set = 0;
+    while ( @fields )
+    {
+        ( $field, $value ) = ( shift @fields, shift @fields );
+        $self->set( $field => $value ) if $set;
+        $set = 1 if $p{to} eq $field;
+    }
+    return $self;
+}
 
 for ( qw/ year month day hour minute second nanosecond time_zone locale / )
 {
@@ -511,6 +534,17 @@ L<DateTime::Infinite|DateTime::Infinite>.
 
 Incomplete dates are not "Infinite".
 
+
+=item * truncate( to => ... )
+
+This method allows you to define some of the components in
+the object to their "zero" values.  The "to" parameter is used to
+specify which values to truncate, and it may be one of "year",
+"month", "day", "hour", "minute", or "second".  For example, if
+"month" is specified, then the day becomes 1, and the hour,
+minute, and second all become 0.
+
+
 =back
 
 
@@ -669,7 +703,6 @@ These methods are not implemented in C<DateTime::Incomplete>
   offset, is_dst, time_zone_short_name
   strftime
   utc_rd_values, utc_rd_as_seconds, local_rd_as_seconds
-  truncate
   add_duration, add, subtract_duration, subtract, subtract_datetime
 
 There are no class methods. The following are not implemented:

@@ -7,4 +7,5 @@ MANIFEST.SKIP
 Changes
 t/02incomplete.t
 t/03base.t
+t/04base_overflow.t
 

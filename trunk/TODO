@@ -1,8 +1,11 @@
 TODO file for DateTime::Incomplete
 
-- set( day => 31 )->next( $dt ) might break if $dt is on february.
+- t/04base_overflow.t:
+  "set( day => 31 )->next( $dt )" might break if $dt is on february.
 
 - more tests for next/previous/closest with year and nanosecond
+
+- "truncate" tests
 
 - locale and time_zone tests:
 
