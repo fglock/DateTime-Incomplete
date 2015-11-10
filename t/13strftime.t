@@ -37,7 +37,7 @@ while (<DATA>)
     elsif (/^(\w+)/)
     {
         $locale = $1;
-        eval "use DateTime::Locale::$1";
+        eval "use DateTime::Locale; DateTime::Locale->load('$1');";
         die $@ if $@;
 
         # Test::More::diag("New locale: $locale\n");
