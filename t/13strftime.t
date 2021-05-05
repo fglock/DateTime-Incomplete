@@ -13,7 +13,7 @@ BEGIN
 
 use strict;
 
-use Test::More tests => 100;
+use Test::More tests => 101;
 
 use DateTime::Incomplete;
 use DateTime;
@@ -125,6 +125,16 @@ while (<DATA>)
 # %Oq	III
 # %OY	MCMXCIX
 # %Oy	XCIX
+
+# Test strftime formatting of nanoseconds, most-trivial cases
+subtest 'strfnano' => sub {
+    my $dti = DateTime::Incomplete->new( nanosecond => 987654321 );
+    isa_ok ($dti, 'DateTime::Incomplete', '$dti');
+    is ($dti->strftime('%N'), '987654321', 'N');
+    $dti = DateTime::Incomplete->new( year => '1973' );
+    isa_ok ($dti, 'DateTime::Incomplete', '$dti 1973');
+    is ($dti->strftime('%N'), 'xxxxxxxxx', 'Nx');
+};				# subtest 'strfnano'
 
 __DATA__
 year => undef
