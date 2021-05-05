@@ -546,7 +546,7 @@ sub _format_nanosecs
 
     # rd_nanosecs can have a fractional separator
     my ( $ret, $frac ) = split /[.,]/, $self->nanosecond;
-    $ret = sprintf "09d" => $ret;  # unless length( $ret ) == 9;
+    $ret = sprintf "%09d" => $ret;  # unless length( $ret ) == 9;
     $ret .= $frac if $frac;
 
     return substr( $ret, 0, $precision );
